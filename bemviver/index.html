@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BemViver IA | Receitas práticas para o dia a dia</title>
+<meta name="description" content="Descubra receitas caseiras, econômicas e saborosas. Experimente o assistente de receitas e conheça o guia de 30 receitas.">
+<meta property="og:title" content="BemViver IA — receitas sem complicação">
+<meta property="og:description" content="Ideias fáceis para cozinhar com o que você já tem em casa.">
+<meta name="theme-color" content="#245e4d">
+<style>
+:root{--green:#245e4d;--ink:#17342c;--light:#f5f9f4;--cream:#fffdf7;--gold:#f2b857}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--cream);line-height:1.6}header{background:var(--light);border-bottom:1px solid #dce8dc}nav{max-width:1080px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;gap:12px}.brand{font-weight:900;font-size:23px;color:var(--green)}.pill{font-size:12px;background:#e0efe2;border-radius:30px;padding:5px 12px}main{max-width:1080px;margin:auto;padding:0 22px}.hero{padding:72px 0 55px;display:grid;grid-template-columns:1.2fr .8fr;gap:44px;align-items:center}.eyebrow{font-weight:800;text-transform:uppercase;color:var(--green);font-size:13px;letter-spacing:.1em}h1{font-size:clamp(34px,5vw,64px);line-height:1.08;margin:14px 0 19px}h2{font-size:clamp(25px,3vw,38px);line-height:1.15;margin:0 0 12px}p{margin:0 0 18px}.sub{font-size:20px;max-width:600px;color:#436258}.buttons{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}.btn{background:var(--green);color:white;display:inline-block;padding:13px 20px;text-decoration:none;border:0;border-radius:10px;font-weight:800;cursor:pointer}.btn.secondary{background:white;color:var(--green);border:1px solid #a7c2b2}.btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #ecbb6e;outline-offset:3px}.art{border-radius:28px;min-height:320px;background:radial-gradient(circle at 35% 30%,#b4d6a9,transparent 43%),radial-gradient(circle at 70% 72%,#f0c97e,transparent 46%),linear-gradient(140deg,#d4e9d3,#fef0c8);display:grid;place-items:center;box-shadow:0 24px 50px #153a2922;font-size:130px}.section{padding:48px 0}.muted{color:#527064}.panel{background:white;border:1px solid #dde9df;border-radius:20px;padding:28px;box-shadow:0 12px 30px #16362608}.inputs{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.inputs label{font-weight:700;display:grid;gap:5px}select,input{border:1px solid #a7bfaf;padding:11px 12px;border-radius:9px;background:#fff;color:var(--ink);font:inherit;min-width:200px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}.recipe{background:#fff;border:1px solid #dfeadf;border-radius:16px;padding:20px}.recipe h3{font-size:21px;margin:4px 0 6px}.recipe small{font-weight:700;color:#2d6653}.recipe p{font-size:14px;color:#4c6157}.price{font-size:52px;font-weight:900;margin:4px 0}.split{display:grid;grid-template-columns:1fr 1fr;gap:24px}.highlight{background:#e9f3e8}.notice{font-size:13px;color:#56695f;margin-top:12px}.footer{border-top:1px solid #dde6dd;padding:30px 0 45px;font-size:13px;color:#52645c}.hidden{display:none}.tag{display:inline-block;background:#edf6ec;border-radius:18px;padding:2px 10px;font-size:12px;font-weight:700}
+@media(max-width:760px){.hero,.split{grid-template-columns:1fr}.hero{padding:42px 0;gap:24px}.grid{grid-template-columns:1fr}.art{min-height:210px;font-size:90px}.section{padding:33px 0}.panel{padding:18px}.sub{font-size:17px}}
+</style>
+</head>
+<body>
+<header><nav><div class="brand">🌿 BemViver <span style="color:#d49d3c">IA</span></div><div class="pill">Receitas • Bem-estar • Praticidade</div></nav></header>
+<main>
+<section class="hero">
+ <div><div class="eyebrow">Cozinhar bem pode ser simples</div><h1>Mais sabor e praticidade na sua rotina.</h1><p class="sub">Receitas caseiras, acessíveis e ideias para aproveitar os ingredientes que você já tem.</p><div class="buttons"><a class="btn" href="#experimentar">Experimentar receitas grátis</a><a class="btn secondary" href="#guia">Conhecer o guia</a></div><p class="notice">Conteúdo educativo de alimentação e bem-estar. Não substitui orientação profissional individualizada.</p></div>
+ <div class="art" role="img" aria-label="Ilustração de uma salada caseira">🥗</div>
+</section>
+<section id="experimentar" class="section">
+ <div class="eyebrow">Experimente sem pagar</div><h2>O que dá para preparar hoje?</h2><p class="muted">Selecione um ingrediente e encontre sugestões do nosso catálogo inicial.</p>
+ <div class="panel"><div class="inputs"><label for="ingrediente">Ingrediente principal<select id="ingrediente"><option value="todos">Tenho vários ingredientes</option><option value="ovo">Ovos</option><option value="banana">Banana</option><option value="aveia">Aveia</option><option value="arroz">Arroz</option><option value="frango">Frango</option><option value="tomate">Tomate</option></select></label><label for="tipo">Momento<select id="tipo"><option value="todos">Qualquer hora</option><option value="cafe">Café da manhã</option><option value="almoco">Almoço ou jantar</option><option value="lanche">Lanche</option></select></label></div><div id="resultados" class="grid" aria-live="polite"></div><p class="notice">Demonstração com filtro automático de receitas. A conversa com inteligência artificial está em desenvolvimento.</p></div>
+</section>
+<section id="guia" class="section">
+<div class="split"><div><div class="eyebrow">Guia digital</div><h2>30 receitas caseiras para variar seu cardápio</h2><p class="muted">Café da manhã, refeições, lanches e bebidas: ingredientes comuns, porções aproximadas e passo a passo fácil.</p><p>✔ Receitas para fazer em casa<br>✔ Versão digital para ler no celular<br>✔ Ideias de substituições simples</p></div><div class="panel highlight"><span class="tag">Oferta planejada</span><div class="price">R$ 14,90</div><p>Pagamento único pelo guia em PDF.</p><p class="notice">Vendas ainda não iniciadas: estamos configurando o pagamento e a entrega digital. Nenhum valor é cobrado nesta página.</p><span class="btn secondary" aria-disabled="true" style="cursor:default">Pagamento em preparação</span></div></div>
+</section>
+<section class="section"><div class="panel"><h2>Uma assistente mais completa vem aí</h2><p class="muted">O plano futuro é sugerir receitas por ingredientes, tempo disponível e preferências alimentares gerais. Quando lançada, a versão com IA conversacional poderá ter uma assinatura própria, distinta do guia.</p></div></section>
+<footer class="footer">© 2026 BemViver IA • Conteúdo culinário informativo. Confira ingredientes e alergênicos. Não fornecemos diagnósticos, tratamentos, prescrições, promessas de emagrecimento ou cura. Esta página não solicita informações pessoais nem processa pagamentos.</footer>
+</main>
+<script>
+const receitas=[
+{nome:"Panqueca de banana com aveia",tipo:"cafe",items:["banana","aveia","ovo"],tempo:"12 min",ingredientes:"1 banana madura, 1 ovo, 3 colheres de aveia",passos:"Amasse a banana, misture o ovo e a aveia. Doure pequenas porções em frigideira antiaderente dos dois lados."},
+{nome:"Omelete de tomate e ervas",tipo:"cafe",items:["ovo","tomate"],tempo:"10 min",ingredientes:"2 ovos, 1 tomate pequeno, cheiro-verde",passos:"Bata os ovos, acrescente o tomate picado e as ervas. Cozinhe em frigideira tampada até firmar."},
+{nome:"Arroz colorido da semana",tipo:"almoco",items:["arroz","tomate"],tempo:"15 min",ingredientes:"1 xícara de arroz já cozido, 1 cenoura, 1 tomate, 1 colher de azeite",passos:"Refogue a cenoura ralada e o tomate, junte o arroz cozido e aqueça bem."},
+{nome:"Frango de panela com legumes",tipo:"almoco",items:["frango","tomate"],tempo:"30 min",ingredientes:"250 g de frango em cubos, 1 tomate, 1 cenoura, 1/2 cebola",passos:"Refogue a cebola, doure o frango, adicione legumes e um pouco de água. Cozinhe até o frango estar totalmente cozido."},
+{nome:"Vitamina cremosa de banana",tipo:"lanche",items:["banana","aveia"],tempo:"5 min",ingredientes:"1 banana, 200 ml de leite ou bebida vegetal, 1 colher de aveia",passos:"Bata todos os ingredientes no liquidificador e consuma em seguida. Verifique alergênicos."},
+{nome:"Bolinho de aveia de frigideira",tipo:"lanche",items:["aveia","ovo","banana"],tempo:"12 min",ingredientes:"1 ovo, 2 colheres de aveia, 1/2 banana amassada",passos:"Misture tudo, despeje em frigideira pequena untada e cozinhe em fogo baixo dos dois lados."}
+];
+const target=document.getElementById("resultados");
+function render(){
+ const ing=document.getElementById("ingrediente").value,cat=document.getElementById("tipo").value;
+ const filtro=receitas.filter(r=>(ing==="todos"||r.items.includes(ing))&&(cat==="todos"||r.tipo===cat));
+ target.replaceChildren();
+ if(!filtro.length){const p=document.createElement("p");p.textContent="Sem combinação exata. Tente outro ingrediente ou momento.";target.appendChild(p);return}
+ for(const r of filtro){const art=document.createElement("article");art.className="recipe";const t=document.createElement("small");t.textContent="⏱ "+r.tempo;const h=document.createElement("h3");h.textContent=r.nome;const i=document.createElement("p");i.textContent="Ingredientes: "+r.ingredientes;const p=document.createElement("p");p.textContent=r.passos;art.append(t,h,i,p);target.appendChild(art)}
+}
+document.getElementById("ingrediente").addEventListener("change",render);document.getElementById("tipo").addEventListener("change",render);render();
+</script>
+</body></html>
