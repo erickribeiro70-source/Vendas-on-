@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://bemviver-ia.onrender.com/sitemap.xml
