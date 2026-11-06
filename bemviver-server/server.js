@@ -36,11 +36,22 @@ async function hasPaid(p){
  return Array.isArray(r.data)&&r.data.some(o=>o.external_reference===p.ref&&o.status==='processed'&&o.status_detail==='accredited'&&o.currency==='BRL'&&Number(o.total_amount)===14.9&&Number(o.total_paid_amount)>=14.9);
 }
 function verifyWebhook(req,u){
+ // Apenas códigos de diagnóstico; nunca registrar credenciais, assinaturas ou dados pessoais.
+ const reject=(reason)=>{console.warn('Webhook rejected:',reason);return false;};
  const sig=String(req.headers['x-signature']||'');
- const ts=sig.match(/(?:^|,)ts=(\d+)/)?.[1],s=sig.match(/(?:^|,)v1=([a-f0-9]{64})/)?.[1],id=u.searchParams.get('data.id'),requestId=req.headers['x-request-id'];
- if(!WHSECRET||!ts||!s||!id||!requestId||Math.abs(Date.now()-Number(ts))>300000)return false;
+ const ts=sig.match(/(?:^|,)\s*ts=(\d+)/)?.[1];
+ const signature=sig.match(/(?:^|,)\s*v1=([a-f0-9]{64})/i)?.[1];
+ const id=u.searchParams.get('data.id');
+ const requestId=req.headers['x-request-id'];
+ if(!WHSECRET)return reject('secret-not-configured');
+ if(!ts||!signature||!id||!requestId)return reject('signature-fields-missing');
+ // Algumas notificações informam ts em segundos; outras em milissegundos.
+ const timestamp=Number(ts);
+ const timestampMs=ts.length<=10?timestamp*1000:timestamp;
+ if(!Number.isFinite(timestampMs)||Math.abs(Date.now()-timestampMs)>300000)return reject('timestamp-out-of-window');
  const check=crypto.createHmac('sha256',WHSECRET).update('id:'+id.toLowerCase()+';request-id:'+requestId+';ts:'+ts+';').digest('hex');
- return crypto.timingSafeEqual(Buffer.from(check),Buffer.from(s));
+ if(!crypto.timingSafeEqual(Buffer.from(check,'hex'),Buffer.from(signature,'hex')))return reject('invalid-hmac');
+ return true;
 }
 function page(t){
  const safe=JSON.stringify(t);
