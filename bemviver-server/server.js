@@ -6,7 +6,18 @@ const SITE='https://bemviver-ia.onrender.com';
 const HOST=process.env.PUBLIC_API_URL||'https://bemviver-ia-api.onrender.com';
 const TOKEN=process.env.MP_ACCESS_TOKEN||'';
 const SECRET=process.env.DELIVERY_SIGNING_KEY||'';
-const WHSECRET=process.env.MP_WEBHOOK_SECRET||'';
+// Normaliza apenas caracteres de colagem em variáveis de ambiente. Nunca registra credenciais.
+const WEBHOOK_SECRET_RAW=String(process.env.MP_WEBHOOK_SECRET||'');
+const WHSECRET=WEBHOOK_SECRET_RAW.trim().replace(/^(['"])([\s\S]*)\1$/, '$2').trim();
+console.info('Webhook configuration diagnostic',JSON.stringify({
+ configured:WHSECRET.length>0,
+ secretLengthClass:WHSECRET.length===0?'absent':WHSECRET.length<16?'short':WHSECRET.length<32?'medium':'long',
+ hadOuterWhitespace:WEBHOOK_SECRET_RAW!==WEBHOOK_SECRET_RAW.trim(),
+ hadWrappingQuotes:/^(['"])[\s\S]*\1$/.test(WEBHOOK_SECRET_RAW.trim()),
+ looksLikeAccessToken:/^(APP_USR-|TEST-|Bearer\\s)/i.test(WHSECRET),
+ sameAsAccessToken:WHSECRET.length>0&&WHSECRET===TOKEN,
+ sameAsDeliveryKey:WHSECRET.length>0&&WHSECRET===SECRET
+}));
 const PRICE='14.90';
 function pdf(){
   const b64=process.env.GUIDE_PDF_BASE64||Array.from({length:12},(_,i)=>process.env['GUIDE_PDF_PART_'+(i+1)]||'').join('');
