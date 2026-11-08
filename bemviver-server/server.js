@@ -144,7 +144,7 @@ http.createServer(async(req,res)=>{
   const p=parseTicket(u.searchParams.get('ticket'));if(!p)return json(res,403,{error:'Link inválido ou expirado'});
   if(!TOKEN)return json(res,503,{error:'Servidor não configurado'});
   try{
-   if(!await hasPaid(p))return json(res,200,{paid:false});
+   if(!await hasPaid(p))return json(res,path==='/api/download'?403:200,{paid:false});
    if(path==='/api/status')return json(res,200,{paid:true});
    const file=pdf();if(!file)return json(res,503,{error:'PDF indisponível'});
    res.writeHead(200,{'Content-Type':'application/pdf','Content-Length':file.length,'Content-Disposition':'attachment; filename="BemViver_IA_Guia_30_Receitas.pdf"','Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end(file);
