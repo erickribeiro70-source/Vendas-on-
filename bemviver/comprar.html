@@ -67,6 +67,18 @@ footer a{color:var(--green)}
 <p class="small">Pagamento realizado fora do BemViver IA, no Mercado Pago. Confira o vendedor, o item e o preço no checkout.</p>
 </aside>
 </section>
+<section class="box" id="compra-automatica" hidden aria-labelledby="titulo-automatico">
+<span class="kicker">Integração segura com o Mercado Pago</span>
+<h2 id="titulo-automatico">Receber o guia após a confirmação do pagamento</h2>
+<p>Esta opção aparece apenas quando o servidor confirma que o checkout e a entrega protegida do PDF estão preparados. O pagamento é feito no Mercado Pago; o guia é disponibilizado por link de download após a aprovação.</p>
+<form id="form-checkout" class="auto-form">
+<label for="email-checkout"><strong>E-mail para identificar o pedido</strong></label>
+<input id="email-checkout" name="email" type="email" required autocomplete="email" maxlength="254" placeholder="seuemail@exemplo.com" aria-describedby="privacidade-checkout" style="width:100%;max-width:420px;border:1px solid #a4c2ad;border-radius:10px;padding:12px;font:inherit">
+<p id="privacidade-checkout" class="small">O e-mail será encaminhado ao Mercado Pago para identificar a compra. O guia será baixado na página de retorno; o envio por e-mail ainda não está disponível.</p>
+<button class="btn" id="botao-checkout" type="submit">Continuar para o Mercado Pago</button>
+<p id="mensagem-checkout" class="result" role="status" aria-live="polite"></p>
+</form>
+</section>
 <section class="box" id="como-comprar">
 <span class="kicker">Compra com atendimento</span><h2>Como receber seu guia</h2>
 <p class="warn"><strong>Antes de pagar:</strong> combine pelo Instagram o canal, o prazo e as condições da entrega do PDF. Não realize o pagamento se essas informações não estiverem claras.</p>
@@ -94,6 +106,36 @@ footer a{color:var(--green)}
 <footer>© 2026 BemViver IA. Não envie senhas, dados de cartão, CPF ou informações de saúde por mensagens. <a href="/termos.html">Informações do produto</a> · <a href="/privacidade.html">Privacidade</a>.</footer>
 </main>
 <script>
+// O checkout integrado só aparece após resposta positiva do servidor; a API
+// também bloqueia qualquer criação de pedido enquanto ENABLE_CHECKOUT=false.
+const apiBemViver='https://bemviver-ia-api.onrender.com';
+const caixaAutomatica=document.getElementById('compra-automatica');
+const formCheckout=document.getElementById('form-checkout');
+const botaoCheckout=document.getElementById('botao-checkout');
+const mensagemCheckout=document.getElementById('mensagem-checkout');
+fetch(apiBemViver+'/health',{cache:'no-store'})
+ .then(async r=>r.ok?await r.json():null)
+ .then(status=>{caixaAutomatica.hidden=!(status&&status.checkoutEnabled===true)})
+ .catch(()=>{caixaAutomatica.hidden=true});
+formCheckout.addEventListener('submit',async event=>{
+ event.preventDefault();
+ if(botaoCheckout.disabled)return;
+ const email=document.getElementById('email-checkout').value.trim();
+ if(!email||!formCheckout.reportValidity())return;
+ botaoCheckout.disabled=true;
+ mensagemCheckout.textContent='Preparando seu pedido com segurança…';
+ try{
+  const r=await fetch(apiBemViver+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+  const data=await r.json();
+  if(!r.ok||!data.checkoutUrl)throw new Error('indisponivel');
+  const url=new URL(data.checkoutUrl);
+  if(url.protocol!=='https:'||!(url.hostname==='mercadopago.com.br'||url.hostname.endsWith('.mercadopago.com.br')))throw new Error('destino-invalido');
+  window.location.assign(url.href);
+ }catch{
+  mensagemCheckout.textContent='Não foi possível iniciar o checkout. Nenhum pagamento foi feito. Use o atendimento para obter ajuda.';
+  botaoCheckout.disabled=false;
+ }
+});
 const checkbox=document.getElementById('entendi');
 const payment=document.getElementById('pagar');
 checkbox.addEventListener('change',()=>{
