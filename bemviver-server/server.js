@@ -1,5 +1,7 @@
 'use strict';
 const http=require('node:http');
+const fs=require('node:fs/promises');
+const nodePath=require('node:path');
 const crypto=require('node:crypto');
 const {URL}=require('node:url');
 const SITE='https://bemviver-ia.onrender.com';
@@ -68,6 +70,34 @@ function page(t){
  const safe=JSON.stringify(t);
  return '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BemViver IA — Entrega</title><style>body{font:17px system-ui;background:#f3f8f3;color:#153f31;max-width:600px;margin:40px auto;padding:20px}main{background:white;padding:24px;border-radius:14px}a{color:#215d4b}#download a{display:inline-block;background:#215d4b;color:white;padding:12px;border-radius:8px}</style><main><h1>BemViver IA</h1><p id="msg">Consultando seu pagamento no Mercado Pago…</p><p id="download"></p><a href="'+SITE+'">Voltar ao site</a></main><script>const t='+safe+';let count=0;async function check(){try{const r=await fetch("/api/status?ticket="+encodeURIComponent(t));const j=await r.json();if(j.paid){document.getElementById("msg").textContent="Pagamento aprovado!";const a=document.createElement("a");a.href="/api/download?ticket="+encodeURIComponent(t);a.textContent="Baixar guia de 30 receitas";document.getElementById("download").replaceChildren(a);return;}document.getElementById("msg").textContent="Pagamento ainda não confirmado. Vamos consultar novamente.";}catch{document.getElementById("msg").textContent="Verificação indisponível. Atualize esta página.";}if(++count<60)setTimeout(check,10000)}check()</script></html>';
 }
+
+// Versão unificada: o mesmo serviço pode entregar o site e a API.
+// Diretório público com lista fechada; credenciais e código de servidor nunca são servidos.
+const PUBLIC_PAGES=new Map([
+ ['/','index.html'],['/index.html','index.html'],['/comprar.html','comprar.html'],
+ ['/divulgar.html','divulgar.html'],['/privacidade.html','privacidade.html'],
+ ['/termos.html','termos.html'],['/robots.txt','robots.txt'],['/sitemap.xml','sitemap.xml']
+]);
+async function servePublicSite(req,res,pathName){
+ const filename=PUBLIC_PAGES.get(pathName);
+ if(req.method!=='GET'||!filename)return false;
+ try{
+  const filenameOnDisk=nodePath.join(__dirname,'..','bemviver',filename);
+  const bytes=await fs.readFile(filenameOnDisk);
+  const contentType=filename.endsWith('.html')?'text/html; charset=utf-8':filename.endsWith('.xml')?'application/xml; charset=utf-8':'text/plain; charset=utf-8';
+  res.writeHead(200,{
+   'Content-Type':contentType,'Content-Length':bytes.length,
+   'X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin',
+   'Cache-Control':filename.endsWith('.html')?'no-cache':'public, max-age=3600'
+  });
+  res.end(bytes);return true;
+ }catch(e){
+  console.error('Public site file unavailable:',filename,e.code||'read-error');
+  json(res,503,{error:'Página temporariamente indisponível'});
+  return true;
+ }
+}
+
 const rate=new Map();
 http.createServer(async(req,res)=>{
  const u=new URL(req.url,HOST),path=u.pathname;
@@ -103,5 +133,6 @@ http.createServer(async(req,res)=>{
    res.writeHead(200,{'Content-Type':'application/pdf','Content-Length':file.length,'Content-Disposition':'attachment; filename="BemViver_IA_Guia_30_Receitas.pdf"','Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end(file);
   }catch(e){console.error('Payment lookup error',e.message);return json(res,503,{error:'Não foi possível verificar o pagamento'});}
  }
+ if(await servePublicSite(req,res,path))return;
  return json(res,404,{error:'Não encontrado'});
 }).listen(Number(process.env.PORT||10000),'0.0.0.0',()=>console.log('BemViver IA API ready'));
