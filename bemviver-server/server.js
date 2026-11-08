@@ -65,7 +65,7 @@ async function mp(path,method,body,key){
  const h={'Authorization':'Bearer '+TOKEN,'Accept':'application/json'};
  if(body)h['Content-Type']='application/json';if(key)h['X-Idempotency-Key']=key;
  const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),10000);
- try{const r=await fetch('https://api.mercadopago.com'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined,signal:ctl.signal});const j=await r.json().catch(()=>({}));if(!r.ok){const code=String(j.code||j.cause?.[0]?.code||j.error||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,60);throw Error('Mercado Pago HTTP '+r.status+(code?' ['+code+']':''));}return j;}finally{clearTimeout(timer);}
+ try{const r=await fetch('https://api.mercadopago.com'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined,signal:ctl.signal});const j=await r.json().catch(()=>({}));if(!r.ok){const code=String(j.code||j.cause?.[0]?.code||j.error||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,60);const requestId=String(r.headers.get('x-request-id')||'').replace(/[^a-z0-9-]/gi,'').slice(0,90);throw Error('Mercado Pago HTTP '+r.status+(code?' ['+code+']':'')+(requestId?' [x-request-id:'+requestId+']':''));}return j;}finally{clearTimeout(timer);}
 }
 // Consulta somente leitura para validar acesso ao gateway antes de abrir vendas.
 // Nao cria pedidos nem publica dados de compradores ou credenciais.
@@ -74,7 +74,7 @@ async function gatewayPreflight(){
  if(!TOKEN){console.warn('Gateway preflight: missing-token');return;}
  const end=new Date();
  const begin=new Date(end.getTime()-86400000);
- const qs=new URLSearchParams({begin_date:begin.toISOString(),end_date:end.toISOString(),page:'1',page_size:'1'});
+ const qs=new URLSearchParams({begin_date:begin.toISOString(),end_date:end.toISOString(),offset:'0',limit:'1'});
  try{
   const response=await mp('/v1/orders?'+qs);
   console.info('Gateway preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.data),readOnly:true}));
@@ -91,7 +91,7 @@ async function gatewayPreflight(){
  }
 }
 async function hasPaid(p){
- const q=new URLSearchParams({begin_date:new Date(p.at-3600000).toISOString(),end_date:new Date(Math.min(Date.now()+3600000,p.at+31*86400000)).toISOString(),external_reference:p.ref,page_size:'10'});
+ const q=new URLSearchParams({begin_date:new Date(p.at-3600000).toISOString(),end_date:new Date(Math.min(Date.now()+3600000,p.at+31*86400000)).toISOString(),external_reference:p.ref,limit:'10'});
  const r=await mp('/v1/orders?'+q);
  return Array.isArray(r.data)&&r.data.some(o=>o.external_reference===p.ref&&o.status==='processed'&&o.status_detail==='accredited'&&o.currency==='BRL'&&Number(o.total_amount)===14.9&&Number(o.total_paid_amount)>=14.9);
 }
