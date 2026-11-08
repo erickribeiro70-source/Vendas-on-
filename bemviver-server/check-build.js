@@ -12,6 +12,7 @@ if(start<0||end<start)throw Error('Script da pagina de compra nao encontrado');
 new vm.Script(checkout.slice(start+8,end),{filename:'bemviver/comprar.html:inline.js'});
 if(!server.includes("ENABLE_CHECKOUT==='true'"))throw Error('Trava de cobranca ausente');
 if(!checkout.includes('id="compra-automatica"')||!checkout.includes('id="form-checkout"'))throw Error('Formulario de checkout em falta');
-if(!checkout.includes('https://mpago.la/22itHvV'))throw Error('Pagamento manual existente deve ser preservado');
+if(/mpago\.la|id=["']pagar["']/.test(checkout))throw Error('Link de pagamento manual deve ficar ausente enquanto testes nao forem aprovados');
+if(!checkout.includes('Checkout indisponível nesta fase.'))throw Error('Aviso de cobranca pausada deve estar visivel');
 if(!server.includes("if(!ready())return json(res,503"))throw Error('Checkout desativado deve retornar 503');
 console.log('BemViver: sintaxe e bloqueio de checkout aprovados (sem rede e sem pagamentos).');
