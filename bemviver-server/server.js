@@ -25,7 +25,10 @@ function pdf(){
   const b64=process.env.GUIDE_PDF_BASE64||Array.from({length:12},(_,i)=>process.env['GUIDE_PDF_PART_'+(i+1)]||'').join('');
   if(!b64)return null;
   const b=Buffer.from(b64,'base64');
-  return b.length>200&&b.length<15000000&&b.subarray(0,5).toString()==='%PDF-'?b:null;
+  if(!(b.length>200&&b.length<15000000&&b.subarray(0,5).toString()==='%PDF-'))return null;
+  const expected=String(process.env.GUIDE_PDF_SHA256||'').trim().toLowerCase();
+  if(expected&&(!/^[a-f0-9]{64}$/.test(expected)||crypto.createHash('sha256').update(b).digest('hex')!==expected))return null;
+  return b;
 }
 function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WHSECRET.length>=16&&!!pdf();}
 function logReadiness(){
