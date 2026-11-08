@@ -28,6 +28,17 @@ function pdf(){
   return b.length>200&&b.length<15000000&&b.subarray(0,5).toString()==='%PDF-'?b:null;
 }
 function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&!!pdf();}
+function logReadiness(){
+ // Diagnóstico operacional sem expor valores privados.
+ console.info('BemViver sales readiness',JSON.stringify({
+   checkoutFeatureEnabled:process.env.ENABLE_CHECKOUT==='true',
+   paymentTokenConfigured:TOKEN.length>20,
+   deliverySigningKeyConfigured:SECRET.length>=32,
+   paidGuidePdfLoaded:!!pdf(),
+   webhookSignatureConfigured:WHSECRET.length>0,
+   autoCheckoutReady:ready()
+ }));
+}
 function json(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));}
 function mac(s){return crypto.createHmac('sha256',SECRET).update(s).digest('hex');}
 function makeTicket(ref,at){const b=Buffer.from(JSON.stringify({ref,at,exp:at+30*86400000})).toString('base64url');return b+'.'+mac(b);}
@@ -135,4 +146,4 @@ http.createServer(async(req,res)=>{
  }
  if(await servePublicSite(req,res,path))return;
  return json(res,404,{error:'Não encontrado'});
-}).listen(Number(process.env.PORT||10000),'0.0.0.0',()=>console.log('BemViver IA API ready'));
+}).listen(Number(process.env.PORT||10000),'0.0.0.0',()=>{logReadiness();console.log('BemViver IA API ready');});
