@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#245e4d">
-<meta name="description" content="Conheça o guia BemViver IA com 30 receitas caseiras por R$ 14,90. Entrega digital combinada antes do pagamento.">
+<meta name="description" content="Conheça o guia BemViver IA com 30 receitas caseiras por R$ 14,90. Vendas temporariamente pausadas enquanto testamos a entrega digital.">
 <title>Guia de 30 receitas por R$ 14,90 | BemViver IA</title>
 <style>
 :root{--green:#245e4d;--dark:#17342c;--mute:#52665b;--sand:#fff7df;--line:#d8e8da}
@@ -62,9 +62,9 @@ footer a{color:var(--green)}
 <aside class="offer" aria-label="Preço e condições de entrega">
 <span class="kicker">📘 Guia BemViver IA</span><div class="price">R$ 14,90</div>
 <strong>Pagamento único, sem assinatura</strong>
-<p>O produto é um PDF. <b>A entrega neste momento é manual:</b> confirme com o atendimento como e quando receberá o arquivo antes de pagar.</p>
+<p>O produto é um PDF. <b>Pagamentos temporariamente pausados:</b> estamos validando a confirmação de pagamento e o download seguro antes da abertura das vendas.</p>
 <a class="btn" href="#como-comprar">Como comprar meu guia →</a>
-<p class="small">Pagamento realizado fora do BemViver IA, no Mercado Pago. Confira o vendedor, o item e o preço no checkout.</p>
+<p class="small">Nenhum pagamento deve ser realizado nesta fase de testes.</p>
 </aside>
 </section>
 <section class="box" id="compra-automatica" hidden aria-labelledby="titulo-automatico">
@@ -80,26 +80,19 @@ footer a{color:var(--green)}
 </form>
 </section>
 <section class="box" id="como-comprar">
-<span class="kicker">Compra com atendimento</span><h2>Como receber seu guia</h2>
-<p class="warn"><strong>Antes de pagar:</strong> combine pelo Instagram o canal, o prazo e as condições da entrega do PDF. Não realize o pagamento se essas informações não estiverem claras.</p>
-<ol class="steps">
-<li><strong>Solicite o guia:</strong> envie uma mensagem ao perfil de atendimento do BemViver IA no Instagram.</li>
-<li><strong>Confirme a entrega:</strong> combine o envio e tire suas dúvidas sobre o PDF e reembolso.</li>
-<li><strong>Pague pelo Mercado Pago:</strong> somente após receber a confirmação do vendedor.</li>
-<li><strong>Receba o guia:</strong> informe a identificação da transação; o vendedor consulta a aprovação na própria conta Mercado Pago antes de enviar o PDF.</li>
-</ol>
+<span class="kicker">Atendimento e lançamento</span><h2>Guia digital em preparação</h2>
+<p class="warn"><strong>Vendas pausadas:</strong> não realize pagamentos enquanto a integração é testada. O atendimento pode esclarecer dúvidas sobre o conteúdo do guia.</p>
+<p>O guia contém 30 receitas caseiras e será oferecido por R$ 14,90 quando concluirmos os testes da entrega digital. Por enquanto, você pode tirar dúvidas pelo Instagram.</p>
 <div class="actions">
 <a class="btn" target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/erick_ribeiro666/">Abrir Instagram para solicitar o guia</a>
 <button class="btn secondary" type="button" id="copy">Copiar mensagem pronta</button>
 </div>
 <p class="result" id="copy-status" role="status" aria-live="polite"></p>
-<h2 style="margin-top:23px">Pagamento após combinar a entrega</h2>
-<label class="check"><input type="checkbox" id="entendi"><span>Eu já combinei diretamente com o vendedor o canal e o prazo da entrega do PDF, confirmei as condições comerciais e entendo que o envio ainda não é automático.</span></label>
-<a id="pagar" class="btn disabled" role="button" aria-disabled="true" tabindex="-1" target="_blank" rel="noopener noreferrer" href="https://mpago.la/22itHvV">Ir ao pagamento no Mercado Pago</a>
-<p class="small">O endereço de pagamento foi fornecido pelo responsável pelo projeto, mas a página final de cobrança não pôde ser verificada de forma independente. <b>Se o produto, o vendedor ou o valor de R$ 14,90 estiverem diferentes, não pague.</b></p>
+<h2 style="margin-top:23px">Pagamento em preparação</h2>
+<p class="warn" role="status"><strong>Checkout indisponível nesta fase.</strong> O botão de pagamento só será publicado após os testes e a autorização de ativação.</p>
 </section>
 <section class="box faq" aria-label="Perguntas frequentes"><h2>Dúvidas frequentes</h2>
-<details><summary>Recebo o guia automaticamente por e-mail?</summary><p>Não. O recebimento é combinado pelo Instagram e feito pelo vendedor após verificar o pagamento.</p></details>
+<details><summary>Como receberei o guia?</summary><p>Quando as vendas forem ativadas, o guia será disponibilizado por download após a confirmação segura do pagamento. O envio automático por e-mail ainda não está disponível.</p></details>
 <details><summary>Posso pagar uma única vez?</summary><p>Sim. O preço do PDF é R$ 14,90 por compra, sem assinatura recorrente.</p></details>
 <details><summary>Como faço se precisar de atendimento ou reembolso?</summary><p>Fale com o vendedor pelo mesmo Instagram e consulte as <a href="/termos.html">condições e os direitos de consumo</a> antes de comprar.</p></details>
 </section>
@@ -136,15 +129,6 @@ formCheckout.addEventListener('submit',async event=>{
   botaoCheckout.disabled=false;
  }
 });
-const checkbox=document.getElementById('entendi');
-const payment=document.getElementById('pagar');
-checkbox.addEventListener('change',()=>{
- const ok=checkbox.checked;
- payment.classList.toggle('disabled',!ok);
- payment.setAttribute('aria-disabled',String(!ok));
- payment.tabIndex=ok?0:-1;
-});
-payment.addEventListener('click',e=>{if(!checkbox.checked)e.preventDefault()});
 document.getElementById('copy').addEventListener('click',async()=>{
  const message='Olá! Quero comprar o Guia BemViver IA de 30 receitas por R$ 14,90. Poderia confirmar como e quando receberei o PDF e quais são as condições de entrega e reembolso antes do pagamento?';
  const status=document.getElementById('copy-status');
