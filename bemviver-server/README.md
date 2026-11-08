@@ -9,7 +9,7 @@ O serviço Render da API é `bemviver-ia-api`. O serviço `bemviver-ia`
 **Manter `ENABLE_CHECKOUT=false` no Render até a revisão dos testes.**
 Quando desativado, `POST /api/checkout` retorna HTTP 503 **sem criar pedido**
 no Mercado Pago, e a opção de checkout integrado fica oculta no site.
-O link manual `mpago.la` segue independente desse mecanismo.
+O link manual externo `mpago.la` existe independentemente da API, mas foi removido das páginas públicas do BemViver IA enquanto os testes não forem aprovados. O bloqueio do servidor não desativa um link externo já distribuído.
 
 ## Variáveis de ambiente (guardar apenas no Render, nunca no GitHub)
 
