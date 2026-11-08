@@ -63,7 +63,7 @@ footer a{color:var(--green)}
 <span class="kicker">📘 Guia BemViver IA</span><div class="price">R$ 14,90</div>
 <strong>Pagamento único, sem assinatura</strong>
 <p>O produto é um PDF. <b>Pagamentos temporariamente pausados:</b> estamos validando a confirmação de pagamento e o download seguro antes da abertura das vendas.</p>
-<a class="btn" href="#como-comprar">Como comprar meu guia →</a>
+<a class="btn" href="#como-comprar">Saiba como vai funcionar →</a>
 <p class="small">Nenhum pagamento deve ser realizado nesta fase de testes.</p>
 </aside>
 </section>
@@ -84,8 +84,8 @@ footer a{color:var(--green)}
 <p class="warn"><strong>Vendas pausadas:</strong> não realize pagamentos enquanto a integração é testada. O atendimento pode esclarecer dúvidas sobre o conteúdo do guia.</p>
 <p>O guia contém 30 receitas caseiras e será oferecido por R$ 14,90 quando concluirmos os testes da entrega digital. Por enquanto, você pode tirar dúvidas pelo Instagram.</p>
 <div class="actions">
-<a class="btn" target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/erick_ribeiro666/">Abrir Instagram para solicitar o guia</a>
-<button class="btn secondary" type="button" id="copy">Copiar mensagem pronta</button>
+<a class="btn" target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/erick_ribeiro666/">Abrir Instagram para tirar dúvidas</a>
+<button class="btn secondary" type="button" id="copy">Copiar pergunta sobre o lançamento</button>
 </div>
 <p class="result" id="copy-status" role="status" aria-live="polite"></p>
 <h2 style="margin-top:23px">Pagamento em preparação</h2>
@@ -93,8 +93,8 @@ footer a{color:var(--green)}
 </section>
 <section class="box faq" aria-label="Perguntas frequentes"><h2>Dúvidas frequentes</h2>
 <details><summary>Como receberei o guia?</summary><p>Quando as vendas forem ativadas, o guia será disponibilizado por download após a confirmação segura do pagamento. O envio automático por e-mail ainda não está disponível.</p></details>
-<details><summary>Posso pagar uma única vez?</summary><p>Sim. O preço do PDF é R$ 14,90 por compra, sem assinatura recorrente.</p></details>
-<details><summary>Como faço se precisar de atendimento ou reembolso?</summary><p>Fale com o vendedor pelo mesmo Instagram e consulte as <a href="/termos.html">condições e os direitos de consumo</a> antes de comprar.</p></details>
+<details><summary>O guia terá pagamento único?</summary><p>Sim. Quando as vendas forem liberadas, o preço previsto é R$ 14,90 por compra, sem assinatura recorrente. Os pagamentos estão pausados no momento.</p></details>
+<details><summary>Como posso tirar dúvidas sobre o lançamento e meus direitos?</summary><p>Entre em contato pelo Instagram indicado acima e consulte as <a href="/termos.html">informações do produto e direitos do consumidor</a>. Nenhum pagamento deve ser realizado durante os testes.</p></details>
 </section>
 <footer>© 2026 BemViver IA. Não envie senhas, dados de cartão, CPF ou informações de saúde por mensagens. <a href="/termos.html">Informações do produto</a> · <a href="/privacidade.html">Privacidade</a>.</footer>
 </main>
@@ -130,7 +130,7 @@ formCheckout.addEventListener('submit',async event=>{
  }
 });
 document.getElementById('copy').addEventListener('click',async()=>{
- const message='Olá! Quero comprar o Guia BemViver IA de 30 receitas por R$ 14,90. Poderia confirmar como e quando receberei o PDF e quais são as condições de entrega e reembolso antes do pagamento?';
+ const message='Olá! Gostaria de saber quando o Guia BemViver IA de 30 receitas estará disponível, como será feita a entrega do PDF e quais serão as condições da compra. Não quero fazer pagamento durante os testes.';
  const status=document.getElementById('copy-status');
  try{await navigator.clipboard.writeText(message);status.textContent='Mensagem copiada. Cole na conversa do Instagram.'}
  catch{status.textContent='Copie esta mensagem: '+message}
