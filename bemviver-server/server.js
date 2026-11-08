@@ -58,6 +58,21 @@ async function mp(path,method,body,key){
  const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),10000);
  try{const r=await fetch('https://api.mercadopago.com'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined,signal:ctl.signal});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error('Mercado Pago HTTP '+r.status);return j;}finally{clearTimeout(timer);}
 }
+// Consulta somente leitura para validar acesso ao gateway antes de abrir vendas.
+// Nao cria pedidos nem publica dados de compradores ou credenciais.
+async function gatewayPreflight(){
+ if(process.env.MP_GATEWAY_PREFLIGHT!=='true')return;
+ if(!TOKEN){console.warn('Gateway preflight: missing-token');return;}
+ const end=new Date();
+ const begin=new Date(end.getTime()-86400000);
+ const qs=new URLSearchParams({begin_date:begin.toISOString(),end_date:end.toISOString(),page:'1',page_size:'1'});
+ try{
+  const response=await mp('/v1/orders?'+qs);
+  console.info('Gateway preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.data),readOnly:true}));
+ }catch(e){
+  console.error('Gateway preflight failed:',e.message);
+ }
+}
 async function hasPaid(p){
  const q=new URLSearchParams({begin_date:new Date(p.at-3600000).toISOString(),end_date:new Date(Math.min(Date.now()+3600000,p.at+31*86400000)).toISOString(),external_reference:p.ref,page_size:'10'});
  const r=await mp('/v1/orders?'+q);
@@ -152,4 +167,4 @@ http.createServer(async(req,res)=>{
  }
  if(await servePublicSite(req,res,path))return;
  return json(res,404,{error:'Não encontrado'});
-}).listen(Number(process.env.PORT||10000),'0.0.0.0',()=>{logReadiness();console.log('BemViver IA API ready');});
+}).listen(Number(process.env.PORT||10000),'0.0.0.0',()=>{logReadiness();console.log('BemViver IA API ready');void gatewayPreflight();});
