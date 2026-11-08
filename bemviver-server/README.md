@@ -18,11 +18,25 @@ O link manual `mpago.la` segue independente desse mecanismo.
 - `MP_WEBHOOK_SECRET`: assinatura secreta da configuração de Webhooks **da mesma
   aplicação e do mesmo ambiente (teste/produção)**; não é o Access Token.
 - `DELIVERY_SIGNING_KEY`: chave aleatória privada com pelo menos 32 caracteres.
+- `GUIDE_PDF_SHA256`: hash SHA-256 do PDF, usado para recusar conteúdo corrompido.
 - `GUIDE_PDF_BASE64` **ou** `GUIDE_PDF_PART_1` ... `GUIDE_PDF_PART_12`:
   bytes do PDF privado codificados em Base64, sem espaços, divididos em
   partes sequenciais quando necessário. O PDF pago **não pode ser enviado ao
   repositório público**, nem à pasta pública do Static Site.
 - `PUBLIC_API_URL=https://bemviver-ia-api.onrender.com`
+
+### Importação do guia sem colocar o conteúdo no GitHub
+
+Foi preparado o arquivo privado `BemViver_IA_importar_no_Render.env`, contendo
+`GUIDE_PDF_SHA256` e 12 partes `GUIDE_PDF_PART_1` a `GUIDE_PDF_PART_12`.
+Ele é distribuído **somente como anexo privado da conversa**, não pelo
+repositório e não no site público. No Render, abra a página Environment do
+serviço `bemviver-ia-api`, use **Add from .env** para importar o arquivo,
+confira os nomes das 13 variáveis e salve com deploy.
+
+**Não** importar no Static Site `bemviver-ia`, não publicar no GitHub e não
+adicionar `ENABLE_CHECKOUT=true` ao arquivo. Caso a ferramenta solicite
+colar o conteúdo manualmente, não colar em mensagens públicas.
 
 O guia oficial tem 34 páginas. Antes de ativar, confirmar que o endpoint de
 saúde informa `pdfLoaded:true`. Sem PDF válido, a API permanece bloqueada.
