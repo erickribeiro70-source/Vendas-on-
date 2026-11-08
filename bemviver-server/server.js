@@ -20,6 +20,7 @@ console.info('Webhook configuration diagnostic',JSON.stringify({
  sameAsAccessToken:WHSECRET.length>0&&WHSECRET===TOKEN,
  sameAsDeliveryKey:WHSECRET.length>0&&WHSECRET===SECRET
 }));
+const WEBHOOK_SECRET_VALID=WHSECRET.length>=16&&!/^(APP_USR-|TEST-|Bearer\s)/i.test(WHSECRET)&&WHSECRET!==TOKEN&&WHSECRET!==SECRET;
 const PRICE='14.90';
 function pdf(){
   const b64=process.env.GUIDE_PDF_BASE64||Array.from({length:12},(_,i)=>process.env['GUIDE_PDF_PART_'+(i+1)]||'').join('');
@@ -30,7 +31,7 @@ function pdf(){
   if(expected&&(!/^[a-f0-9]{64}$/.test(expected)||crypto.createHash('sha256').update(b).digest('hex')!==expected))return null;
   return b;
 }
-function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WHSECRET.length>=16&&!!pdf();}
+function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WEBHOOK_SECRET_VALID&&!!pdf();}
 function logReadiness(){
  // Diagnóstico operacional sem expor valores privados.
  console.info('BemViver sales readiness',JSON.stringify({
@@ -38,7 +39,7 @@ function logReadiness(){
    paymentTokenConfigured:TOKEN.length>20,
    deliverySigningKeyConfigured:SECRET.length>=32,
    paidGuidePdfLoaded:!!pdf(),
-   webhookSignatureConfigured:WHSECRET.length>0,
+   webhookSignatureConfigured:WEBHOOK_SECRET_VALID,
    autoCheckoutReady:ready()
  }));
 }
@@ -70,7 +71,7 @@ function verifyWebhook(req,u){
  const signature=sig.match(/(?:^|,)\s*v1=([a-f0-9]{64})/i)?.[1];
  const id=u.searchParams.get('data.id');
  const requestId=req.headers['x-request-id'];
- if(!WHSECRET)return reject('secret-not-configured');
+ if(!WEBHOOK_SECRET_VALID)return reject('secret-not-valid');
  if(!ts||!signature||!id||!requestId)return reject('signature-fields-missing');
  // Algumas notificações informam ts em segundos; outras em milissegundos.
  const timestamp=Number(ts);
@@ -117,7 +118,7 @@ http.createServer(async(req,res)=>{
  const u=new URL(req.url,HOST),path=u.pathname;
  if(req.headers.origin===SITE){res.setHeader('Access-Control-Allow-Origin',SITE);res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');}
  if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
- if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready(),pdfLoaded:!!pdf(),webhookConfigured:WHSECRET.length>=16});
+ if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready(),pdfLoaded:!!pdf(),webhookConfigured:WEBHOOK_SECRET_VALID});
  if(req.method==='POST'&&path==='/webhooks/mercadopago')return verifyWebhook(req,u)?json(res,200,{received:true}):json(res,401,{error:'Invalid signature'});
  if(req.method==='POST'&&path==='/api/checkout'){
   if(!ready())return json(res,503,{error:'Checkout ainda não ativado. Nenhuma cobrança foi iniciada.'});
