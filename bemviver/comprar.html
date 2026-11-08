@@ -108,7 +108,24 @@ const botaoCheckout=document.getElementById('botao-checkout');
 const mensagemCheckout=document.getElementById('mensagem-checkout');
 fetch(apiBemViver+'/health',{cache:'no-store'})
  .then(async r=>r.ok?await r.json():null)
- .then(status=>{caixaAutomatica.hidden=!(status&&status.checkoutEnabled===true)})
+ .then(status=>{
+  const vendasAtivas=!!(status&&status.checkoutEnabled===true);
+  caixaAutomatica.hidden=!vendasAtivas;
+  if(!vendasAtivas)return;
+  const oferta=document.querySelector('.offer');
+  oferta.querySelector('p').textContent='Pague com segurança pelo Mercado Pago. Depois da confirmação, o download do guia será liberado na página de retorno.';
+  const atalho=oferta.querySelector('a.btn');
+  atalho.href='#compra-automatica';
+  atalho.textContent='Comprar agora — R$ 14,90';
+  oferta.querySelector('.small').textContent='Pagamento único e entrega digital após a aprovação da compra.';
+  document.getElementById('como-comprar').hidden=true;
+  const respostas=document.querySelectorAll('.faq details p');
+  if(respostas.length===3){
+    respostas[0].textContent='Após a confirmação do pagamento pelo Mercado Pago, você poderá baixar o PDF na página de retorno. Guarde essa página para acessar novamente o guia.';
+    respostas[1].textContent='Sim. O guia custa R$ 14,90 em pagamento único, sem assinatura.';
+    respostas[2].textContent='Para suporte sobre o produto ou solicitações de reembolso, entre em contato pelo Instagram indicado nos termos de compra e consulte as informações do produto.';
+  }
+})
  .catch(()=>{caixaAutomatica.hidden=true});
 formCheckout.addEventListener('submit',async event=>{
  event.preventDefault();
