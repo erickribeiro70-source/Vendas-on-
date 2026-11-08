@@ -56,7 +56,7 @@ async function mp(path,method,body,key){
  const h={'Authorization':'Bearer '+TOKEN,'Accept':'application/json'};
  if(body)h['Content-Type']='application/json';if(key)h['X-Idempotency-Key']=key;
  const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),10000);
- try{const r=await fetch('https://api.mercadopago.com'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined,signal:ctl.signal});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error('Mercado Pago HTTP '+r.status);return j;}finally{clearTimeout(timer);}
+ try{const r=await fetch('https://api.mercadopago.com'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined,signal:ctl.signal});const j=await r.json().catch(()=>({}));if(!r.ok){const code=String(j.code||j.cause?.[0]?.code||j.error||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,60);throw Error('Mercado Pago HTTP '+r.status+(code?' ['+code+']':''));}return j;}finally{clearTimeout(timer);}
 }
 // Consulta somente leitura para validar acesso ao gateway antes de abrir vendas.
 // Nao cria pedidos nem publica dados de compradores ou credenciais.
@@ -71,6 +71,12 @@ async function gatewayPreflight(){
   console.info('Gateway preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.data),readOnly:true}));
  }catch(e){
   console.error('Gateway preflight failed:',e.message);
+  try{
+   const methods=await mp('/v1/payment_methods');
+   console.info('Gateway payment methods preflight',JSON.stringify({authorized:true,responseValid:Array.isArray(methods),readOnly:true}));
+  }catch(secondary){
+   console.warn('Gateway payment methods preflight failed:',secondary.message);
+  }
  }
 }
 async function hasPaid(p){
