@@ -15,4 +15,5 @@ if(!checkout.includes('id="compra-automatica"')||!checkout.includes('id="form-ch
 if(/mpago\.la|id=["']pagar["']/.test(checkout))throw Error('Link de pagamento manual deve ficar ausente enquanto testes nao forem aprovados');
 if(!checkout.includes('Checkout indisponível nesta fase.'))throw Error('Aviso de cobranca pausada deve estar visivel');
 if(!server.includes("if(!ready())return json(res,503"))throw Error('Checkout desativado deve retornar 503');
-console.log('BemViver: sintaxe e bloqueio de checkout aprovados (sem rede e sem pagamentos).');
+require('node:child_process').execFileSync(process.execPath,[path.join(__dirname,'offline-sales-test.js')],{stdio:'inherit'});
+console.log('BemViver: sintaxe, bloqueio de checkout e simulacao de vendas aprovados (sem rede e sem pagamentos).');
