@@ -6,7 +6,16 @@ const crypto=require('node:crypto');
 const {URL}=require('node:url');
 const SITE='https://bemviver-ia.onrender.com';
 const HOST=process.env.PUBLIC_API_URL||'https://bemviver-ia-api.onrender.com';
-const TOKEN=process.env.MP_ACCESS_TOKEN||'';
+// Remover caracteres de colagem sem imprimir a credencial secreta.
+const TOKEN_INPUT=String(process.env.MP_ACCESS_TOKEN||'');
+const TOKEN=TOKEN_INPUT.trim().replace(/^(['"])([\s\S]*)\1$/, '$2').trim().replace(/^Bearer\s+/i,'').trim();
+console.info('Mercado Pago credential format diagnostic',JSON.stringify({
+  configured:TOKEN.length>20,
+  hasProductionPrefix:/^APP_USR-/.test(TOKEN),
+  hadOuterWhitespace:TOKEN_INPUT!==TOKEN_INPUT.trim(),
+  hadWrappingQuotes:/^(['"])[\s\S]*\1$/.test(TOKEN_INPUT.trim()),
+  hadBearerPrefix:/^Bearer\s+/i.test(TOKEN_INPUT.trim())
+}));
 const SECRET=process.env.DELIVERY_SIGNING_KEY||'';
 // Normaliza apenas caracteres de colagem em variáveis de ambiente. Nunca registra credenciais.
 const WEBHOOK_SECRET_RAW=String(process.env.MP_WEBHOOK_SECRET||'');
@@ -71,11 +80,13 @@ async function gatewayPreflight(){
   console.info('Gateway preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.data),readOnly:true}));
  }catch(e){
   console.error('Gateway preflight failed:',e.message);
+  // Segundo endpoint de apenas leitura: distinguir bloqueio de Orders de credencial inválida.
+  // Não cria preferências nem gera cobranças.
   try{
-   const methods=await mp('/v1/payment_methods');
-   console.info('Gateway payment methods preflight',JSON.stringify({authorized:true,responseValid:Array.isArray(methods),readOnly:true}));
+   const preferences=await mp('/checkout/preferences/search?limit=1&offset=0');
+   console.info('Gateway preferences preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(preferences.elements),readOnly:true}));
   }catch(secondary){
-   console.warn('Gateway payment methods preflight failed:',secondary.message);
+   console.warn('Gateway preferences preflight failed:',secondary.message);
   }
  }
 }
