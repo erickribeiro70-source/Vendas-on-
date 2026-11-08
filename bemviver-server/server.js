@@ -27,7 +27,7 @@ function pdf(){
   const b=Buffer.from(b64,'base64');
   return b.length>200&&b.length<15000000&&b.subarray(0,5).toString()==='%PDF-'?b:null;
 }
-function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&!!pdf();}
+function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WHSECRET.length>=16&&!!pdf();}
 function logReadiness(){
  // Diagnóstico operacional sem expor valores privados.
  console.info('BemViver sales readiness',JSON.stringify({
@@ -114,7 +114,7 @@ http.createServer(async(req,res)=>{
  const u=new URL(req.url,HOST),path=u.pathname;
  if(req.headers.origin===SITE){res.setHeader('Access-Control-Allow-Origin',SITE);res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');}
  if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
- if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready()});
+ if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready(),pdfLoaded:!!pdf(),webhookConfigured:WHSECRET.length>=16});
  if(req.method==='POST'&&path==='/webhooks/mercadopago')return verifyWebhook(req,u)?json(res,200,{received:true}):json(res,401,{error:'Invalid signature'});
  if(req.method==='POST'&&path==='/api/checkout'){
   if(!ready())return json(res,503,{error:'Checkout ainda não ativado. Nenhuma cobrança foi iniciada.'});
@@ -126,7 +126,9 @@ http.createServer(async(req,res)=>{
    if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json(res,400,{error:'Informe e-mail válido'});
    const ref='BV_'+crypto.randomBytes(16).toString('hex'),ticket=makeTicket(ref,Date.now()),ret=HOST+'/retorno?ticket='+encodeURIComponent(ticket);
    const o=await mp('/v1/orders','POST',{type:'online',processing_mode:'manual',total_amount:PRICE,external_reference:ref,payer:{email},items:[{title:'Guia Digital BemViver IA - 30 receitas',unit_price:PRICE,quantity:1}],config:{online:{success_url:ret,pending_url:ret,failure_url:ret,auto_return:'all'}}},crypto.randomUUID());
-   if(!o.checkout_url||!o.checkout_url.startsWith('https://'))throw Error('Missing checkout_url');
+   if(!o.checkout_url)throw Error('Missing checkout_url');
+   const checkoutDestination=new URL(o.checkout_url);
+   if(checkoutDestination.protocol!=='https:'||!(checkoutDestination.hostname==='mercadopago.com.br'||checkoutDestination.hostname.endsWith('.mercadopago.com.br')))throw Error('Unsafe checkout_url');
    return json(res,200,{checkoutUrl:o.checkout_url,ticket});
   }catch(e){console.error('Checkout error',e.message);return json(res,502,{error:'Não foi possível iniciar o checkout'});}
  }
