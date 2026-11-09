@@ -13,6 +13,7 @@ new vm.Script(checkout.slice(start+8,end),{filename:'bemviver/comprar.html:inlin
 if(!server.includes("ENABLE_CHECKOUT==='true'"))throw Error('Trava de cobranca ausente');
 if(!checkout.includes('id="compra-automatica"')||!checkout.includes('id="form-checkout"'))throw Error('Formulario de checkout em falta');
 if(/mpago\.la|id=["']pagar["']/.test(checkout))throw Error('Link de pagamento manual deve ficar ausente enquanto testes nao forem aprovados');
+if(!server.includes("mp('/checkout/preferences','POST'")||!server.includes("mp('/v1/payments/search?'")||server.includes("mp('/v1/orders'"))throw Error('API incorreta para Checkout Pro');
 if(!checkout.includes('Checkout indisponível nesta fase.'))throw Error('Aviso de cobranca pausada deve estar visivel');
 if(!server.includes("if(!ready())return json(res,503"))throw Error('Checkout desativado deve retornar 503');
 require('node:child_process').execFileSync(process.execPath,[path.join(__dirname,'offline-sales-test.js')],{stdio:'inherit'});
