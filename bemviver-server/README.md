@@ -24,6 +24,9 @@ O link manual externo `mpago.la` existe independentemente da API, mas foi removi
   partes sequenciais quando necessário. O PDF pago **não pode ser enviado ao
   repositório público**, nem à pasta pública do Static Site.
 - `PUBLIC_API_URL=https://bemviver-ia-api.onrender.com`
+- `MP_GATEWAY_PREFLIGHT=true` (opcional): no início do serviço, faz somente uma consulta de leitura a `GET /v1/payments/search` para verificar autorização. **Não cria pagamentos nem preferências**. Esse teste, mesmo bem-sucedido, não substitui a compra simulada de ponta a ponta.
+
+Os nomes das variáveis ficam à esquerda no Render e seus valores à direita. `true` ou `false` são **valores**, nunca nomes de variáveis; uma variável avulsa chamada `true` não ativa o checkout.
 
 ### Importação do guia sem colocar o conteúdo no GitHub
 
@@ -44,14 +47,13 @@ saúde informa `pdfLoaded:true`. Sem PDF válido, a API permanece bloqueada.
 ## Webhook Mercado Pago
 
 - URL correta: `https://bemviver-ia-api.onrender.com/webhooks/mercadopago`.
-- Evento: **Order (Mercado Pago)** para integração via Orders API.
+- Evento: **Pagamentos (`payment`)** para a integração Checkout Pro via **Preferences API**. Não selecionar eventos exclusivos de Orders.
 - O HMAC é calculado sobre `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`
   usando a assinatura privada. Resposta HTTP 401 indica rejeição da
   autenticação: verificar se a assinatura no Render corresponde àquela
   exibida no painel Mercado Pago para a **mesma** aplicação/ambiente.
 - Não relaxar a validação de assinatura para fazer o teste ficar verde.
-  O servidor não usa o conteúdo da notificação como prova de pagamento:
-  consulta a order diretamente no Mercado Pago.
+  O webhook confirma somente a autenticidade da notificação; ele **não libera o PDF**. Os endpoints `/api/status` e `/api/download` verificam diretamente o pagamento aprovado via **Payments API** (`GET /v1/payments/search`, filtrando `external_reference`) antes de conceder acesso.
 - Configurar o webhook no painel da aplicação correta; **não** apontá-lo
   para `bemviver-ia.onrender.com`, pois esse endereço é o site estático.
 
@@ -78,7 +80,7 @@ variável existe, não que a assinatura foi validada com um teste autêntico.
 2. Conferir credenciais do Mercado Pago sem compartilhá-las no chat.
 3. Verificar assinatura HMAC de um webhook genuíno de teste.
 4. Testar o fluxo ponta a ponta com conta/comprador de teste, sem cobrança real,
-   verificando order, retorno, `/api/status` e `/api/download`.
+   verificando a preferência criada via `POST /checkout/preferences`, o pagamento aprovado via Payments API, o retorno, `/api/status` e `/api/download`.
 5. Revisar e autorizar **separadamente** a mudança para
    `ENABLE_CHECKOUT=true`. Só então exibir checkout automático para clientes.
 
