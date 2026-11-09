@@ -19,6 +19,7 @@ let handler;
 let paid=false;
 let refunded=false;
 let paymentOverride=null;
+let sellerOverride=null;
 let upstreamCalls=0;
 let latestRef='';
 const sandbox={
@@ -38,7 +39,7 @@ const sandbox={
       assert.equal(preference.items[0].currency_id,'BRL');
       assert.equal(preference.auto_return,'approved');
       assert.equal(preference.back_urls.success,preference.back_urls.pending);
-      return {ok:true,async json(){return {init_point:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=PREF-MOCK'}}};
+      return {ok:true,async json(){return {init_point:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=PREF-MOCK',collector_id:sellerOverride??env.BEMVIVER_TEST_SELLER_ID}}};
     }
     assert.ok(String(url).includes('/v1/payments/search?'),'Consulta de payments esperada');
     const query=new URL(url).searchParams;
@@ -85,6 +86,14 @@ async function request(method,url,body='',headers={}){
   assert.equal(r.status,403,'Nao permite download sem ticket valido');
   env.ENABLE_CHECKOUT='true';
   assert.equal(sandbox.__test.ready(),true);
+  env.BEMVIVER_SANDBOX_MODE='true';
+  assert.equal(sandbox.__test.ready(),false,'Sem vendedor esperado checkout nao pode habilitar');
+  env.BEMVIVER_TEST_SELLER_ID='3805194124';
+  assert.equal(sandbox.__test.ready(),true);
+  sellerOverride='987654321';
+  r=await request('POST','/api/checkout',{email:'teste@example.com'});
+  assert.equal(r.status,503,'Token de vendedor divergente deve bloquear checkout do sandbox');
+  sellerOverride=null;
   r=await request('POST','/api/checkout',{email:'teste@example.com'});
   assert.equal(r.status,200,'Criacao simulada de preferencia');
   assert.ok(r.json().checkoutUrl.includes('mercadopago.com.br'));
