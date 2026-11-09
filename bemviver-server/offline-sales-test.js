@@ -18,6 +18,7 @@ const env={
 let handler;
 let paid=false;
 let refunded=false;
+let paymentOverride=null;
 let upstreamCalls=0;
 let latestRef='';
 const sandbox={
@@ -50,6 +51,7 @@ const sandbox={
       transaction_amount_refunded:refunded?14.9:0,
       transaction_details:{total_paid_amount:paid?14.9:0}
     };
+    if(paymentOverride)Object.assign(payment,paymentOverride);
     return {ok:true,async json(){return {results:[payment]}}};
   }
 };
@@ -81,6 +83,9 @@ async function request(method,url,body='',headers={}){
   assert.ok(r.json().checkoutUrl.includes('mercadopago.com.br'));
   const ticket=r.json().ticket;
   assert.ok(sandbox.__test.parseTicket(ticket),'Ticket assinado valida');
+  r=await request('GET','/retorno?ticket='+encodeURIComponent(ticket));
+  assert.equal(r.status,200,'Pagina de retorno do checkout valida');
+  assert.ok(String(r.body).includes('Consultando seu pagamento'),'Retorno possui acompanhamento do pedido');
   assert.ok(!sandbox.__test.parseTicket(ticket+'x'),'Ticket adulterado bloqueado');
   paid=false;
   r=await request('GET','/api/status?ticket='+encodeURIComponent(ticket));
@@ -95,6 +100,20 @@ async function request(method,url,body='',headers={}){
   assert.equal(r.status,200,'Entrega digital aprovada');
   assert.equal(r.headers['Content-Type'],'application/pdf');
   assert.ok(Buffer.isBuffer(r.body),'Arquivo PDF entregue');
+  // Não confiar no status aprovado se outro elemento do pagamento não confere.
+  for(const [caseName,override] of [
+    ['referencia divergente',{external_reference:'BV_00000000000000000000000000000000'}],
+    ['valor divergente',{transaction_amount:10}],
+    ['moeda divergente',{currency_id:'USD'}],
+    ['valor efetivo insuficiente',{transaction_details:{total_paid_amount:10}}],
+    ['detalhe de status nao acreditado',{status_detail:'pending'}],
+    ['reembolso parcial',{transaction_amount_refunded:1}]
+  ]){
+    paymentOverride=override;
+    r=await request('GET','/api/download?ticket='+encodeURIComponent(ticket));
+    assert.equal(r.status,403,'PDF deve ficar bloqueado: '+caseName);
+  }
+  paymentOverride=null;
   refunded=true;
   r=await request('GET','/api/download?ticket='+encodeURIComponent(ticket));
   assert.equal(r.status,403,'Reembolso nao permite entrega');
@@ -110,5 +129,13 @@ async function request(method,url,body='',headers={}){
     'x-request-id':requestId,'x-signature':'ts='+ts+',v1='+'0'.repeat(64)
   });
   assert.equal(r.status,401,'Webhook com assinatura invalida bloqueado');
-  console.log('BemViver: checkout, notificacao assinada, status e PDF aprovados em simulacao offline. Nenhuma cobranca realizada.');
+  r=await request('POST','/webhooks/mercadopago?data.id='+id,'',{
+    'x-request-id':requestId,'x-signature':'ts='+(Date.now()-3600000)+',v1='+mac
+  });
+  assert.equal(r.status,401,'Webhook antigo nao pode ser autenticado');
+  r=await request('POST','/webhooks/mercadopago?data.id='+id,'',{
+    'x-request-id':'outro-request-id','x-signature':'ts='+ts+',v1='+mac
+  });
+  assert.equal(r.status,401,'Webhook nao aceita request ID divergente');
+  console.log('BemViver: checkout, webhook, retorno, antifraude de valores e PDF aprovados em simulacao offline. Nenhuma cobranca realizada.');
 })().catch(e=>{console.error(e);process.exitCode=1});
