@@ -40,7 +40,7 @@ function pdf(){
   if(expected&&(!/^[a-f0-9]{64}$/.test(expected)||crypto.createHash('sha256').update(b).digest('hex')!==expected))return null;
   return b;
 }
-function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WEBHOOK_SECRET_VALID&&!!pdf();}
+function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WEBHOOK_SECRET_VALID&&!!pdf()&&(process.env.BEMVIVER_SANDBOX_MODE!=='true'||/^\d{6,16}$/.test(String(process.env.BEMVIVER_TEST_SELLER_ID||'')));}
 function logReadiness(){
  // Diagnóstico operacional sem expor valores privados.
  console.info('BemViver sales readiness',JSON.stringify({
@@ -92,7 +92,8 @@ async function gatewayPreflight(){
    });
    console.info('Gateway preferences preflight',JSON.stringify({
     authorized:true,preferenceCreated:!!preference.id,checkoutUrlReturned:!!preference.init_point,
-    paymentInitiated:false,preferenceLinkExposed:false
+    paymentInitiated:false,preferenceLinkExposed:false,
+    sandboxSellerVerified:process.env.BEMVIVER_SANDBOX_MODE==='true'?String(preference.collector_id||'')===String(process.env.BEMVIVER_TEST_SELLER_ID||''):null
    }));
   }catch(e){console.warn('Gateway preferences preflight failed:',e.message);}
  }
@@ -195,6 +196,11 @@ http.createServer(async(req,res)=>{
     notification_url:HOST+'/webhooks/mercadopago'
    });
    if(!preference.init_point)throw Error('Missing init_point');
+   // Um checkout de teste nunca deve redirecionar se o token pertence a um vendedor real.
+   if(process.env.BEMVIVER_SANDBOX_MODE==='true'&&String(preference.collector_id||'')!==String(process.env.BEMVIVER_TEST_SELLER_ID||'')){
+    console.warn('Sandbox checkout blocked: seller identity mismatch');
+    return json(res,503,{error:'Vendedor de teste não confirmado; checkout bloqueado'});
+   }
    const checkoutDestination=new URL(preference.init_point);
    const hostname=checkoutDestination.hostname;
    if(checkoutDestination.protocol!=='https:'||!(hostname==='mercadopago.com'||hostname.endsWith('.mercadopago.com')||hostname==='mercadopago.com.br'||hostname.endsWith('.mercadopago.com.br')))throw Error('Unsafe init_point');
