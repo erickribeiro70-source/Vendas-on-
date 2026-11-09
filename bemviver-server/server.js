@@ -69,14 +69,32 @@ async function mp(path,method,body,key){
 }
 // Diagnóstico sem cobranças: consultar somente a API de pagamentos do Checkout Pro.
 async function gatewayPreflight(){
- if(process.env.MP_GATEWAY_PREFLIGHT!=='true')return;
- if(!TOKEN){console.warn('Gateway preflight: missing-token');return;}
- const qs=new URLSearchParams({external_reference:'BV_PREFLIGHT_NO_MATCH',limit:'1'});
- try{
-  const response=await mp('/v1/payments/search?'+qs);
-  console.info('Gateway payments preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.results),readOnly:true}));
- }catch(e){
-  console.warn('Gateway payments preflight failed:',e.message);
+ if(process.env.MP_GATEWAY_PREFLIGHT==='true'){
+  if(!TOKEN){console.warn('Gateway preflight: missing-token');}
+  else{
+   const qs=new URLSearchParams({external_reference:'BV_PREFLIGHT_NO_MATCH',limit:'1'});
+   try{
+    const response=await mp('/v1/payments/search?'+qs);
+    console.info('Gateway payments preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.results),readOnly:true}));
+   }catch(e){console.warn('Gateway payments preflight failed:',e.message);}
+  }
+ }
+ // Teste opcional de permissão para criar uma preferência; não inicia nem confirma pagamento.
+ // O link retornado nunca é divulgado, registrado ou enviado a compradores.
+ if(process.env.MP_PREFERENCE_PREFLIGHT==='true'){
+  if(!TOKEN){console.warn('Gateway preferences preflight: missing-token');return;}
+  try{
+   const preference=await mp('/checkout/preferences','POST',{
+    items:[{id:'bemviver-validacao-sem-cobranca',title:'Validacao tecnica BemViver IA - nao comprar',quantity:1,currency_id:'BRL',unit_price:Number(PRICE)}],
+    external_reference:'BV_TECHNICAL_TEST_'+crypto.randomBytes(8).toString('hex'),
+    back_urls:{success:SITE,pending:SITE,failure:SITE},
+    notification_url:HOST+'/webhooks/mercadopago'
+   });
+   console.info('Gateway preferences preflight',JSON.stringify({
+    authorized:true,preferenceCreated:!!preference.id,checkoutUrlReturned:!!preference.init_point,
+    paymentInitiated:false,preferenceLinkExposed:false
+   }));
+  }catch(e){console.warn('Gateway preferences preflight failed:',e.message);}
  }
 }
 async function hasPaid(p){
