@@ -139,7 +139,7 @@ formCheckout.addEventListener('submit',async event=>{
   const data=await r.json();
   if(!r.ok||!data.checkoutUrl)throw new Error('indisponivel');
   const url=new URL(data.checkoutUrl);
-  if(url.protocol!=='https:'||!(url.hostname==='mercadopago.com.br'||url.hostname.endsWith('.mercadopago.com.br')))throw new Error('destino-invalido');
+  if(url.protocol!=='https:'||!(url.hostname==='mercadopago.com'||url.hostname.endsWith('.mercadopago.com')||url.hostname==='mercadopago.com.br'||url.hostname.endsWith('.mercadopago.com.br')))throw new Error('destino-invalido');
   window.location.assign(url.href);
  }catch{
   mensagemCheckout.textContent='Não foi possível iniciar o checkout. Nenhum pagamento foi feito. Use o atendimento para obter ajuda.';
