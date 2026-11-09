@@ -30,23 +30,27 @@ const sandbox={
   async fetch(url,opts={}){
     upstreamCalls++;
     assert.ok(String(url).startsWith('https://api.mercadopago.com/'),'Somente API simulada');
-    if(opts.method==='POST'&&String(url).endsWith('/v1/orders')){
-      const order=JSON.parse(opts.body);
-      latestRef=order.external_reference;
-      assert.equal(order.total_amount,'14.90');
-      return {ok:true,async json(){return {checkout_url:'https://www.mercadopago.com.br/checkout/v1/redirect?order_id=ORDTST-MOCK'}}};
+    if(opts.method==='POST'&&String(url).endsWith('/checkout/preferences')){
+      const preference=JSON.parse(opts.body);
+      latestRef=preference.external_reference;
+      assert.equal(preference.items[0].unit_price,14.9);
+      assert.equal(preference.items[0].currency_id,'BRL');
+      assert.equal(preference.auto_return,'approved');
+      assert.equal(preference.back_urls.success,preference.back_urls.pending);
+      return {ok:true,async json(){return {init_point:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=PREF-MOCK'}}};
     }
-    assert.ok(String(url).includes('/v1/orders?'),'Consulta de order esperada');
+    assert.ok(String(url).includes('/v1/payments/search?'),'Consulta de payments esperada');
     const query=new URL(url).searchParams;
     assert.equal(query.get('external_reference'),latestRef);
-    const order={
+    const payment={
       external_reference:latestRef,
-      status:refunded?'refunded':paid?'processed':'created',
-      status_detail:paid&&!refunded?'accredited':'created',
-      currency:'BRL',total_amount:'14.90',
-      total_paid_amount:paid?'14.90':'0.00'
+      status:refunded?'refunded':paid?'approved':'pending',
+      status_detail:paid&&!refunded?'accredited':'pending',
+      currency_id:'BRL',transaction_amount:14.9,
+      transaction_amount_refunded:refunded?14.9:0,
+      transaction_details:{total_paid_amount:paid?14.9:0}
     };
-    return {ok:true,async json(){return {data:[order]}}};
+    return {ok:true,async json(){return {results:[payment]}}};
   }
 };
 new vm.Script(source+'\n;globalThis.__test={ready,makeTicket,parseTicket}',{filename:'server.js'}).runInNewContext(sandbox);
@@ -67,13 +71,13 @@ async function request(method,url,body='',headers={}){
   assert.equal(sandbox.__test.ready(),false);
   let r=await request('POST','/api/checkout',{email:'teste@example.com'});
   assert.equal(r.status,503,'Checkout bloqueado antes da ativacao');
-  assert.equal(upstreamCalls,0,'Checkout bloqueado nao deve criar order');
+  assert.equal(upstreamCalls,0,'Checkout bloqueado nao deve criar preferencia');
   r=await request('GET','/api/download?ticket=invalid');
   assert.equal(r.status,403,'Nao permite download sem ticket valido');
   env.ENABLE_CHECKOUT='true';
   assert.equal(sandbox.__test.ready(),true);
   r=await request('POST','/api/checkout',{email:'teste@example.com'});
-  assert.equal(r.status,200,'Criacao simulada de order');
+  assert.equal(r.status,200,'Criacao simulada de preferencia');
   assert.ok(r.json().checkoutUrl.includes('mercadopago.com.br'));
   const ticket=r.json().ticket;
   assert.ok(sandbox.__test.parseTicket(ticket),'Ticket assinado valida');
