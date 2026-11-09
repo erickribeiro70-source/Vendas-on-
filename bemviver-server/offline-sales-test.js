@@ -71,7 +71,14 @@ async function request(method,url,body='',headers={}){
 }
 (async()=>{
   assert.equal(sandbox.__test.ready(),false);
-  let r=await request('POST','/api/checkout',{email:'teste@example.com'});
+  let r=await request('GET','/teste-compra');
+  assert.equal(r.status,404,'Pagina de teste nao deve existir no ambiente publico');
+  env.BEMVIVER_SANDBOX_MODE='true';
+  r=await request('GET','/teste-compra');
+  assert.equal(r.status,200,'Pagina exclusiva de homologacao acessivel no sandbox');
+  assert.ok(String(r.body).includes('AMBIENTE DE HOMOLOGAÇÃO'),'Pagina deve avisar que nao existe pagamento real');
+  env.BEMVIVER_SANDBOX_MODE='false';
+  r=await request('POST','/api/checkout',{email:'teste@example.com'});
   assert.equal(r.status,503,'Checkout bloqueado antes da ativacao');
   assert.equal(upstreamCalls,0,'Checkout bloqueado nao deve criar preferencia');
   r=await request('GET','/api/download?ticket=invalid');
