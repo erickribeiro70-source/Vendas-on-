@@ -27,11 +27,11 @@
 <section id="guia" class="section" aria-labelledby="titulo-guia">
 <div class="split">
  <div><div class="eyebrow">Guia digital de receitas</div><h2 id="titulo-guia">30 receitas caseiras para variar seu cardápio</h2><p class="muted">Um PDF de 34 páginas, com receitas organizadas para café da manhã, almoço, jantar, lanches, bebidas e sobremesas.</p><ul class="sale-list"><li>Ingredientes encontrados facilmente</li><li>Modo de preparo explicado passo a passo</li><li>Dicas para variar e adaptar receitas</li><li>Leitura no celular, tablet ou computador</li></ul><p class="notice">Produto culinário educativo; não inclui atendimento nutricional, tratamentos ou emagrecimento garantido.</p></div>
- <div class="sale-card"><span class="value-tag">📘 Guia digital pronto</span><h3 style="margin:0;font-size:23px">BemViver IA — 30 receitas</h3><div class="price">R$ 14,90</div><p class="sale-kicker">Pagamento único • sem mensalidade</p><a class="btn sale-cta" href="/comprar.html">Conhecer o guia →</a><p class="sale-disclosure">Vendas temporariamente pausadas. Estamos testando o checkout e a entrega segura do PDF antes de receber pagamentos.</p><p class="sale-terms"><a href="/termos.html">Veja as informações da oferta e seus direitos</a>.</p></div>
+ <div class="sale-card"><span class="value-tag">📘 Guia digital pronto</span><h3 style="margin:0;font-size:23px">BemViver IA — 30 receitas</h3><div class="price">R$ 14,90</div><p class="sale-kicker">Pagamento único • sem mensalidade</p><a class="btn sale-cta" href="/comprar.html">Conhecer o guia →</a><p class="sale-disclosure" id="home-sale-status" role="status">Vendas temporariamente pausadas. Estamos testando o checkout e a entrega segura do PDF antes de receber pagamentos.</p><p class="sale-terms"><a href="/termos.html">Veja as informações da oferta e seus direitos</a>.</p></div>
 </div>
 <div class="faq"><h3>Perguntas frequentes</h3>
 <details><summary>O que vem no guia?</summary><p>São 30 receitas caseiras com ingredientes, preparo e ideias de variações, reunidas em PDF.</p></details>
-<details><summary>Recebo o PDF automaticamente?</summary><p>Ainda não. Primeiro converse com o atendimento para combinar canal e prazo. Após confirmar a aprovação do pagamento, o responsável envia o guia manualmente.</p></details>
+<details><summary>Recebo o PDF automaticamente?</summary><p id="home-sale-faq-answer">Quando as vendas forem ativadas, o download do PDF será liberado na página de retorno após a confirmação do pagamento. O envio automático por e-mail ainda não está disponível.</p></details>
 <details><summary>Preciso pagar assinatura?</summary><p>Não. O guia custa R$ 14,90 em pagamento único. A futura assinatura com IA, se lançada, será outro produto.</p></details>
 </div>
 </section>
@@ -40,6 +40,17 @@
 <p style="margin-top:16px"><a href="/privacidade.html">Privacidade</a> · <a href="/termos.html">Informações do produto</a></p>
 </main>
 <script>
+// Somente o servidor de pagamentos decide se as vendas estao abertas.
+// Sem resposta positiva, a pagina continua mostrando "vendas pausadas".
+fetch('https://bemviver-ia-api.onrender.com/health',{cache:'no-store'})
+ .then(async r=>r.ok?await r.json():null)
+ .then(status=>{
+   if(!status||status.checkoutEnabled!==true)return;
+   document.getElementById('home-sale-status').textContent='Vendas abertas: pagamento seguro pelo Mercado Pago. O PDF fica disponível para download após a confirmação do pagamento.';
+   document.getElementById('home-sale-faq-answer').textContent='Sim. Após a aprovação do pagamento, você poderá baixar o guia pela página de retorno. O envio automático por e-mail ainda não está disponível.';
+   document.querySelector('.sale-cta').textContent='Comprar o guia — R$ 14,90';
+ })
+ .catch(()=>{});
 const receitas=[
 {nome:"Panqueca de banana com aveia",tipo:"cafe",items:["banana","aveia","ovo"],tempo:"12 min",ingredientes:"1 banana madura, 1 ovo, 3 colheres de aveia",passos:"Amasse a banana, misture o ovo e a aveia. Doure pequenas porções em frigideira antiaderente dos dois lados."},
 {nome:"Omelete de tomate e ervas",tipo:"cafe",items:["ovo","tomate"],tempo:"10 min",ingredientes:"2 ovos, 1 tomate pequeno, cheiro-verde",passos:"Bata os ovos, acrescente o tomate picado e as ervas. Cozinhe em frigideira tampada até firmar."},
