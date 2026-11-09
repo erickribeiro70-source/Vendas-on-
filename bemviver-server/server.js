@@ -67,33 +67,30 @@ async function mp(path,method,body,key){
  const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),10000);
  try{const r=await fetch('https://api.mercadopago.com'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined,signal:ctl.signal});const j=await r.json().catch(()=>({}));if(!r.ok){const code=String(j.code||j.cause?.[0]?.code||j.error||'').replace(/[^a-z0-9_.-]/gi,'').slice(0,60);const requestId=String(r.headers.get('x-request-id')||'').replace(/[^a-z0-9-]/gi,'').slice(0,90);throw Error('Mercado Pago HTTP '+r.status+(code?' ['+code+']':'')+(requestId?' [x-request-id:'+requestId+']':''));}return j;}finally{clearTimeout(timer);}
 }
-// Consulta somente leitura para validar acesso ao gateway antes de abrir vendas.
-// Nao cria pedidos nem publica dados de compradores ou credenciais.
+// Diagnóstico sem cobranças: consultar somente a API de pagamentos do Checkout Pro.
 async function gatewayPreflight(){
  if(process.env.MP_GATEWAY_PREFLIGHT!=='true')return;
  if(!TOKEN){console.warn('Gateway preflight: missing-token');return;}
- const end=new Date();
- const begin=new Date(end.getTime()-86400000);
- const qs=new URLSearchParams({begin_date:begin.toISOString(),end_date:end.toISOString(),offset:'0',limit:'1'});
+ const qs=new URLSearchParams({external_reference:'BV_PREFLIGHT_NO_MATCH',limit:'1'});
  try{
-  const response=await mp('/v1/orders?'+qs);
-  console.info('Gateway preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.data),readOnly:true}));
+  const response=await mp('/v1/payments/search?'+qs);
+  console.info('Gateway payments preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(response.results),readOnly:true}));
  }catch(e){
-  console.error('Gateway preflight failed:',e.message);
-  // Segundo endpoint de apenas leitura: distinguir bloqueio de Orders de credencial inválida.
-  // Não cria preferências nem gera cobranças.
-  try{
-   const preferences=await mp('/checkout/preferences/search?limit=1&offset=0');
-   console.info('Gateway preferences preflight',JSON.stringify({authorized:true,searchResponseValid:Array.isArray(preferences.elements),readOnly:true}));
-  }catch(secondary){
-   console.warn('Gateway preferences preflight failed:',secondary.message);
-  }
+  console.warn('Gateway payments preflight failed:',e.message);
  }
 }
 async function hasPaid(p){
- const q=new URLSearchParams({begin_date:new Date(p.at-3600000).toISOString(),end_date:new Date(Math.min(Date.now()+3600000,p.at+31*86400000)).toISOString(),external_reference:p.ref,limit:'10'});
- const r=await mp('/v1/orders?'+q);
- return Array.isArray(r.data)&&r.data.some(o=>o.external_reference===p.ref&&o.status==='processed'&&o.status_detail==='accredited'&&o.currency==='BRL'&&Number(o.total_amount)===14.9&&Number(o.total_paid_amount)>=14.9);
+ const q=new URLSearchParams({external_reference:p.ref,limit:'30'});
+ const r=await mp('/v1/payments/search?'+q);
+ return Array.isArray(r.results)&&r.results.some(payment=>
+   payment.external_reference===p.ref&&
+   payment.status==='approved'&&
+   payment.status_detail==='accredited'&&
+   payment.currency_id==='BRL'&&
+   Number(payment.transaction_amount)===14.9&&
+   Number(payment.transaction_amount_refunded||0)===0&&
+   Number(payment.transaction_details?.total_paid_amount)>=14.9
+ );
 }
 function verifyWebhook(req,u){
  // Apenas códigos de diagnóstico; nunca registrar credenciais, assinaturas ou dados pessoais.
@@ -161,11 +158,17 @@ http.createServer(async(req,res)=>{
    const email=String(JSON.parse(data).email||'').trim().toLowerCase();
    if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json(res,400,{error:'Informe e-mail válido'});
    const ref='BV_'+crypto.randomBytes(16).toString('hex'),ticket=makeTicket(ref,Date.now()),ret=HOST+'/retorno?ticket='+encodeURIComponent(ticket);
-   const o=await mp('/v1/orders','POST',{type:'online',processing_mode:'manual',total_amount:PRICE,external_reference:ref,payer:{email},items:[{title:'Guia Digital BemViver IA - 30 receitas',unit_price:PRICE,quantity:1}],config:{online:{success_url:ret,pending_url:ret,failure_url:ret,auto_return:'all'}}},crypto.randomUUID());
-   if(!o.checkout_url)throw Error('Missing checkout_url');
-   const checkoutDestination=new URL(o.checkout_url);
-   if(checkoutDestination.protocol!=='https:'||!(checkoutDestination.hostname==='mercadopago.com.br'||checkoutDestination.hostname.endsWith('.mercadopago.com.br')))throw Error('Unsafe checkout_url');
-   return json(res,200,{checkoutUrl:o.checkout_url,ticket});
+   const preference=await mp('/checkout/preferences','POST',{
+    items:[{id:'bemviver-guia-30-receitas',title:'Guia Digital BemViver IA - 30 receitas',quantity:1,currency_id:'BRL',unit_price:Number(PRICE)}],
+    payer:{email},external_reference:ref,
+    back_urls:{success:ret,pending:ret,failure:ret},auto_return:'approved',
+    notification_url:HOST+'/webhooks/mercadopago'
+   });
+   if(!preference.init_point)throw Error('Missing init_point');
+   const checkoutDestination=new URL(preference.init_point);
+   const hostname=checkoutDestination.hostname;
+   if(checkoutDestination.protocol!=='https:'||!(hostname==='mercadopago.com'||hostname.endsWith('.mercadopago.com')||hostname==='mercadopago.com.br'||hostname.endsWith('.mercadopago.com.br')))throw Error('Unsafe init_point');
+   return json(res,200,{checkoutUrl:preference.init_point,ticket});
   }catch(e){console.error('Checkout error',e.message);return json(res,502,{error:'Não foi possível iniciar o checkout'});}
  }
  if(req.method==='GET'&&path==='/retorno'){
