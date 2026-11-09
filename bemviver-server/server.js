@@ -148,7 +148,12 @@ http.createServer(async(req,res)=>{
  if(req.headers.origin===SITE){res.setHeader('Access-Control-Allow-Origin',SITE);res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');}
  if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
  if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready(),pdfLoaded:!!pdf(),webhookConfigured:WEBHOOK_SECRET_VALID});
- if(req.method==='POST'&&path==='/webhooks/mercadopago')return verifyWebhook(req,u)?json(res,200,{received:true}):json(res,401,{error:'Invalid signature'});
+ if(req.method==='POST'&&path==='/webhooks/mercadopago'){
+  const authentic=verifyWebhook(req,u);
+  // Registro operacional sem IDs, emails, tokens nem assinatura.
+  if(authentic)console.info('Mercado Pago webhook authenticated: receipt only; payment approval requires API lookup');
+  return authentic?json(res,200,{received:true}):json(res,401,{error:'Invalid signature'});
+ }
  if(req.method==='POST'&&path==='/api/checkout'){
   if(!ready())return json(res,503,{error:'Checkout ainda não ativado. Nenhuma cobrança foi iniciada.'});
   const ip=req.socket.remoteAddress||'unknown',now=Date.now(),recent=(rate.get(ip)||[]).filter(t=>now-t<60000);
