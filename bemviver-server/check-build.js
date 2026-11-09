@@ -5,11 +5,19 @@ const path=require('node:path');
 const vm=require('node:vm');
 const server=fs.readFileSync(path.join(__dirname,'server.js'),'utf8');
 const checkout=fs.readFileSync(path.join(__dirname,'..','bemviver','comprar.html'),'utf8');
+const home=fs.readFileSync(path.join(__dirname,'..','bemviver','index.html'),'utf8');
 new vm.Script(server,{filename:'bemviver-server/server.js'});
 const start=checkout.lastIndexOf('<script>');
 const end=checkout.lastIndexOf('</script>');
 if(start<0||end<start)throw Error('Script da pagina de compra nao encontrado');
 new vm.Script(checkout.slice(start+8,end),{filename:'bemviver/comprar.html:inline.js'});
+const homeStart=home.lastIndexOf('<script>');
+const homeEnd=home.lastIndexOf('</script>');
+if(homeStart<0||homeEnd<homeStart)throw Error('Script da pagina inicial nao encontrado');
+new vm.Script(home.slice(homeStart+8,homeEnd),{filename:'bemviver/index.html:inline.js'});
+if(!home.includes("id=\"home-sale-status\"")||!home.includes("status.checkoutEnabled!==true"))
+  throw Error('Pagina inicial nao verifica o estado do checkout');
+
 if(!server.includes("ENABLE_CHECKOUT==='true'"))throw Error('Trava de cobranca ausente');
 if(!checkout.includes('id="compra-automatica"')||!checkout.includes('id="form-checkout"'))throw Error('Formulario de checkout em falta');
 if(/mpago\.la|id=["']pagar["']/.test(checkout))throw Error('Link de pagamento manual deve ficar ausente enquanto testes nao forem aprovados');
