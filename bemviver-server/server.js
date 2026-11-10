@@ -93,7 +93,8 @@ async function gatewayPreflight(){
    console.info('Gateway preferences preflight',JSON.stringify({
     authorized:true,preferenceCreated:!!preference.id,checkoutUrlReturned:!!preference.init_point,
     paymentInitiated:false,preferenceLinkExposed:false,
-    sandboxSellerVerified:process.env.BEMVIVER_SANDBOX_MODE==='true'?String(preference.collector_id||'')===String(process.env.BEMVIVER_TEST_SELLER_ID||''):null
+    sandboxSellerVerified:process.env.BEMVIVER_SANDBOX_MODE==='true'?String(preference.collector_id||'')===String(process.env.BEMVIVER_TEST_SELLER_ID||''):null,
+     productionSellerVerified:process.env.BEMVIVER_SANDBOX_MODE==='true'?null:(/^\d{6,16}$/.test(String(process.env.BEMVIVER_PRODUCTION_SELLER_ID||''))&&String(preference.collector_id||'')===String(process.env.BEMVIVER_PRODUCTION_SELLER_ID||''))
    }));
   }catch(e){console.warn('Gateway preferences preflight failed:',e.message);}
  }
