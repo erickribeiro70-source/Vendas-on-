@@ -202,6 +202,11 @@ http.createServer(async(req,res)=>{
     console.warn('Sandbox checkout blocked: seller identity mismatch');
     return json(res,503,{error:'Vendedor de teste não confirmado; checkout bloqueado'});
    }
+   // Nunca redirecionar o comprador para uma conta vendedora diferente da configurada.
+   if(process.env.BEMVIVER_SANDBOX_MODE!=='true'&&(!/^\d{6,16}$/.test(String(process.env.BEMVIVER_PRODUCTION_SELLER_ID||''))||String(preference.collector_id||'')!==String(process.env.BEMVIVER_PRODUCTION_SELLER_ID||''))){
+    console.warn('Production checkout blocked: seller identity mismatch');
+    return json(res,503,{error:'Vendedor não confirmado; checkout bloqueado'});
+   }
    const checkoutDestination=new URL(preference.init_point);
    const hostname=checkoutDestination.hostname;
    if(checkoutDestination.protocol!=='https:'||!(hostname==='mercadopago.com'||hostname.endsWith('.mercadopago.com')||hostname==='mercadopago.com.br'||hostname.endsWith('.mercadopago.com.br')))throw Error('Unsafe init_point');
