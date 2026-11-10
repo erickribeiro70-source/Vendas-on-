@@ -68,6 +68,8 @@ function logReadiness(){
    paidGuidePdfLoaded:!!pdf(),
    webhookSignatureConfigured:WEBHOOK_SECRET_VALID,
    sellerIdentityReady:process.env.BEMVIVER_SANDBOX_MODE==='true'?null:sellerDisclosureReady(),
+   sellerCpfValuePresent:process.env.BEMVIVER_SANDBOX_MODE==='true'?null:!!String(process.env.BEMVIVER_PUBLIC_CPF||'').trim(),
+   sellerCpfChecksumValid:process.env.BEMVIVER_SANDBOX_MODE==='true'?null:!!publicSellerCpf(),
    autoCheckoutReady:ready()
  }));
 }
