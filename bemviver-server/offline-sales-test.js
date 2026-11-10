@@ -85,7 +85,21 @@ async function request(method,url,body='',headers={}){
   r=await request('GET','/api/download?ticket=invalid');
   assert.equal(r.status,403,'Nao permite download sem ticket valido');
   env.ENABLE_CHECKOUT='true';
-  assert.equal(sandbox.__test.ready(),true);
+  assert.equal(sandbox.__test.ready(),false,'Producao bloqueada sem identificacao fiscal publicada');
+  let identity=await request('GET','/public/identificacao');
+  assert.equal(identity.status,200);
+  assert.equal(identity.json().published,false,'CPF nao pode ser divulgado sem consentimento explicito');
+  assert.equal(identity.json().cpf,null,'CPF nunca e retornado sem autorizacao');
+  env.BEMVIVER_PUBLISH_CPF='true';
+  env.BEMVIVER_PUBLIC_CPF='00000000000';
+  assert.equal(sandbox.__test.ready(),false,'CPF invalido nao libera checkout');
+  env.BEMVIVER_PUBLIC_CPF='12345678909'; // CPF ficticio de teste; nunca usar no cadastro real
+  assert.equal(sandbox.__test.ready(),true,'CPF validado e publicacao autorizada permitem prontidao');
+  identity=await request('GET','/public/identificacao');
+  assert.equal(identity.json().published,true);
+  assert.equal(identity.json().cpf,'123.456.789-09','CPF publico exibido apenas com consentimento');
+  env.BEMVIVER_PUBLISH_CPF='false';
+  assert.equal(sandbox.__test.ready(),false,'Retirar autorizacao bloqueia producao');
   env.BEMVIVER_SANDBOX_MODE='true';
   assert.equal(sandbox.__test.ready(),false,'Sem vendedor esperado checkout nao pode habilitar');
   env.BEMVIVER_TEST_SELLER_ID='3805194124';
