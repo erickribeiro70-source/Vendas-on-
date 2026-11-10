@@ -40,7 +40,25 @@ function pdf(){
   if(expected&&(!/^[a-f0-9]{64}$/.test(expected)||crypto.createHash('sha256').update(b).digest('hex')!==expected))return null;
   return b;
 }
-function ready(){return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WEBHOOK_SECRET_VALID&&!!pdf()&&(process.env.BEMVIVER_SANDBOX_MODE!=='true'||/^\d{6,16}$/.test(String(process.env.BEMVIVER_TEST_SELLER_ID||'')));}
+// O CPF só será divulgado depois de preenchido no Render e da autorização explícita
+// BEMVIVER_PUBLISH_CPF=true. Não inclua CPF no repositório, URLs ou logs.
+function publicSellerCpf(){
+ const cpf=String(process.env.BEMVIVER_PUBLIC_CPF||'').replace(/\D/g,'');
+ if(!/^\d{11}$/.test(cpf)||/^(\d)\1{10}$/.test(cpf))return null;
+ for(let n=9;n<=10;n++){
+  let soma=0;
+  for(let i=0;i<n;i++)soma+=Number(cpf[i])*(n+1-i);
+  if(((soma*10)%11)%10!==Number(cpf[n]))return null;
+ }
+ return cpf.slice(0,3)+'.'+cpf.slice(3,6)+'.'+cpf.slice(6,9)+'-'+cpf.slice(9);
+}
+function sellerDisclosureReady(){
+ return process.env.BEMVIVER_PUBLISH_CPF==='true'&&!!publicSellerCpf();
+}
+function ready(){
+ return process.env.ENABLE_CHECKOUT==='true'&&TOKEN.length>20&&SECRET.length>=32&&WEBHOOK_SECRET_VALID&&!!pdf()&&
+ (process.env.BEMVIVER_SANDBOX_MODE==='true'?/^\d{6,16}$/.test(String(process.env.BEMVIVER_TEST_SELLER_ID||'')):sellerDisclosureReady());
+}
 function logReadiness(){
  // Diagnóstico operacional sem expor valores privados.
  console.info('BemViver sales readiness',JSON.stringify({
@@ -49,6 +67,7 @@ function logReadiness(){
    deliverySigningKeyConfigured:SECRET.length>=32,
    paidGuidePdfLoaded:!!pdf(),
    webhookSignatureConfigured:WEBHOOK_SECRET_VALID,
+   sellerIdentityReady:process.env.BEMVIVER_SANDBOX_MODE==='true'?null:sellerDisclosureReady(),
    autoCheckoutReady:ready()
  }));
 }
@@ -174,7 +193,8 @@ http.createServer(async(req,res)=>{
   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'self'"});
   return res.end(SANDBOX_CHECKOUT_PAGE);
  }
- if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready(),pdfLoaded:!!pdf(),webhookConfigured:WEBHOOK_SECRET_VALID});
+ if(req.method==='GET'&&path==='/public/identificacao')return json(res,200,{published:sellerDisclosureReady(),cpf:sellerDisclosureReady()?publicSellerCpf():null});
+ if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready(),pdfLoaded:!!pdf(),webhookConfigured:WEBHOOK_SECRET_VALID,sellerIdentityReady:process.env.BEMVIVER_SANDBOX_MODE==='true'?null:sellerDisclosureReady()});
  if(req.method==='POST'&&path==='/webhooks/mercadopago'){
   const authentic=verifyWebhook(req,u);
   // Registro operacional sem IDs, emails, tokens nem assinatura.
