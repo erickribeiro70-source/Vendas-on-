@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Demonstração isolada do agente BemViver IA: receitas e atendimento comercial, sem cobranças.">
+<title>Agente BemViver IA • Ambiente de testes</title>
+<link rel="stylesheet" href="/styles.css">
+</head><body>
+<header class="top"><div class="top-inner">
+  <a class="brand" href="/" aria-label="BemViver IA — testes"><span class="logo">🌿</span><span>BemViver <b>IA</b><small>LABORATÓRIO DE TESTES</small></span></a>
+  <span class="tag"><span class="live-dot"></span> Simulação segura</span>
+</div></header>
+<main class="layout">
+  <section class="intro" aria-labelledby="headline">
+    <div class="eyebrow">🌱 NOVA EXPERIÊNCIA DE ATENDIMENTO</div>
+    <h1 id="headline">Sua cozinha tem ideias. <em>A gente ajuda a descobrir.</em></h1>
+    <p>Converse com o BemViver IA sobre o que você tem em casa, peça o preparo de uma receita ou tire dúvidas sobre nosso guia digital.</p>
+    <div class="safety"><strong>Ambiente de testes.</strong> Nenhuma cobrança ou agendamento é feito aqui. O atendimento de produção continua separado.</div>
+    <div class="feature-grid">
+      <div class="feature"><span>🍳</span><strong>Receitas práticas</strong><small>Com ingredientes da sua cozinha</small></div>
+      <div class="feature"><span>💬</span><strong>Conversa contextual</strong><small>Entende perguntas e continua o assunto</small></div>
+      <div class="feature"><span>📗</span><strong>Guia de receitas</strong><small>Informações comerciais verificadas</small></div>
+      <div class="feature"><span>🔒</span><strong>Sem pagamentos</strong><small>Teste sem acesso ao checkout</small></div>
+    </div>
+    <div class="site-link">Conheça o <a href="https://bemviver-ia.onrender.com" target="_blank" rel="noopener noreferrer">site oficial do BemViver IA</a></div>
+  </section>
+  <section class="assistant" aria-label="Conversa com a assistente">
+    <div class="chat-top">
+      <div class="avatar">🌿</div><div><strong>Assistente BemViver IA</strong><small id="status">Carregando demonstração…</small></div>
+      <button class="clear" type="button" id="reset" title="Iniciar outra conversa">↻ <span>Limpar</span></button>
+    </div>
+    <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Mensagens da conversa">
+      <div class="bubble-row assistant-row"><div class="bubble assist-msg">Olá! 🌿 Sou o assistente BemViver IA, em fase de testes. Que tal me contar quais ingredientes você tem na cozinha? Também posso explicar como funciona nosso guia de receitas.</div></div>
+    </div>
+    <div class="shortcuts" aria-label="Perguntas sugeridas">
+      <button type="button" data-question="Tenho banana, ovo e aveia. O que posso preparar?">🍌 Tenho banana e aveia</button>
+      <button type="button" data-question="Quero o passo a passo da omelete de tomate e ervas">🍳 Receita rápida</button>
+      <button type="button" data-question="Quanto custa o guia digital BemViver IA?">📗 Sobre o guia</button>
+      <button type="button" data-question="Já paguei o guia. Como recebo o PDF?">💌 Ajuda com pedido</button>
+    </div>
+    <form id="chat-form" class="composer">
+      <label class="sr-only" for="message">Sua mensagem</label>
+      <textarea id="message" maxlength="1200" rows="1" placeholder="Escreva sua mensagem aqui…" required></textarea>
+      <button type="submit" id="send" aria-label="Enviar mensagem">➤</button>
+    </form>
+    <div class="chat-foot"><span>As mensagens não são armazenadas neste protótipo.</span><span>Não envie dados pessoais ou de saúde.</span></div>
+  </section>
+</main>
+<footer class="footer">BemViver IA • Protótipo independente. Para compras e informações legais, consulte o <a href="https://bemviver-ia.onrender.com/termos.html" target="_blank" rel="noopener noreferrer">site oficial</a>.</footer>
+<script src="/client.js" defer></script>
+</body></html>
