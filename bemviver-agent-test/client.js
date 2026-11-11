@@ -27,7 +27,7 @@ async function ask(message) {
     addBubble(reply,'assistant');
     history.push({role:'model',content:reply});
     if (voiceEnabled) speakReply(reply);
-    status.textContent=result.mode==='ia'?'IA generativa conectada • testes':'Modo demonstração • testes';
+    status.textContent=result.mode==='ia'?'IA generativa conectada • testes':result.mode==='regras'?'Resposta verificada • testes':'Atendimento guiado • testes';
   } catch(error) {
     addBubble('Não consegui responder agora. Tente novamente em instantes. Nenhum pagamento foi realizado.','assistant');
     status.textContent='Falha temporária • testes';
