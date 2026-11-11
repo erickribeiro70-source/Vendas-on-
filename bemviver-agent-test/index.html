@@ -38,12 +38,19 @@
       <button type="button" data-question="Quanto custa o guia digital BemViver IA?">📗 Sobre o guia</button>
       <button type="button" data-question="Já paguei o guia. Como recebo o PDF?">💌 Ajuda com pedido</button>
     </div>
+    <div class="extras" aria-label="Ferramentas do atendimento">
+      <button type="button" id="mic" class="tool" aria-pressed="false" title="Ditado por voz" hidden>🎙️ <span>Falar</span></button>
+      <button type="button" id="voice-toggle" class="tool" aria-pressed="false" title="Ler respostas em voz alta" hidden>🔈 <span>Ouvir respostas: desligado</span></button>
+      <button type="button" id="recipes-toggle" class="tool" aria-expanded="false" aria-controls="recipes-panel">📖 <span>Ver receitas</span></button>
+    </div>
+    <div id="voice-note" class="voice-note" role="status" aria-live="polite">A voz é opcional e pode não funcionar em todos os navegadores.</div>
+    <div id="recipes-panel" class="recipes-panel" hidden aria-label="Receitas do catálogo"></div>
     <form id="chat-form" class="composer">
       <label class="sr-only" for="message">Sua mensagem</label>
       <textarea id="message" maxlength="1200" rows="1" placeholder="Escreva sua mensagem aqui…" required></textarea>
       <button type="submit" id="send" aria-label="Enviar mensagem">➤</button>
     </form>
-    <div class="chat-foot"><span>As mensagens não são armazenadas neste protótipo.</span><span>Não envie dados pessoais ou de saúde.</span></div>
+    <div class="chat-foot"><span>O histórico não é salvo pelo BemViver IA. Ao usar o microfone, o navegador pode enviar áudio ao serviço de reconhecimento de voz.</span><span>Não envie dados pessoais ou de saúde.</span></div>
   </section>
 </main>
 <footer class="footer">BemViver IA • Protótipo independente. Para compras e informações legais, consulte o <a href="https://bemviver-ia.onrender.com/termos.html" target="_blank" rel="noopener noreferrer">site oficial</a>.</footer>
