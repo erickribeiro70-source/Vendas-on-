@@ -1,9 +1,11 @@
 'use strict';
 const assert = require('node:assert/strict');
+// Offline regression tests must not call a paid or quota-limited Gemini API.
+delete process.env.GEMINI_API_KEY;
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const {RECIPES,firstMatchedRecipe,localAnswer,sanitizeHistory,handler} = require('./server');
+const {RECIPES,firstMatchedRecipe,ingredientPreferences,violatesIngredients,localAnswer,sanitizeHistory,handler} = require('./server');
 const run = (name,fn)=>{fn();console.log('PASS',name);};
 run('catálogo tem seis receitas reais',()=>{
   assert.equal(RECIPES.length,6);
@@ -41,6 +43,33 @@ run('higieniza histórico sem objetos inválidos',()=>{
 });
 run('reconhece nomes com acento',()=>{
   assert.equal(firstMatchedRecipe('Quero o Omelete de tomate e ervas').id,'omelete');
+});
+run('ausência de ovo não permite receita com ovo',()=>{
+  const result=localAnswer('Quero fazer um lanche mas não tenho ovo');
+  assert.equal(result.intent,'receita');
+  assert.ok(result.recipe);
+  assert.ok(!result.recipe.items.includes('ovo'));
+  assert.doesNotMatch(result.reply,/panqueca de banana com aveia/);
+});
+run('banana e aveia sem ovo escolhe receita adequada',()=>{
+  const result=localAnswer('Tenho banana e aveia, mas não tenho ovo');
+  assert.equal(result.recipe.id,'vitamina');
+  assert.ok(!result.recipe.items.includes('ovo'));
+});
+run('negações e afirmações de ingredientes são separadas',()=>{
+  const data=ingredientPreferences('Não tenho banana, mas tenho ovo e tomate');
+  assert.ok(data.excluded.has('banana'));
+  assert.ok(!data.excluded.has('ovo'));
+  assert.ok(data.available.has('ovo'));
+});
+run('restrição nova não reutiliza receita anterior incompatível',()=>{
+  const result=localAnswer('Quero fazer um lanche sem ovo',[{role:'model',content:'Sugiro Panqueca de banana com aveia'}]);
+  assert.ok(!result.recipe.items.includes('ovo'));
+});
+run('resposta do Gemini com ingrediente proibido é descartada',()=>{
+  const excluded=new Set(['ovo']);
+  assert.equal(violatesIngredients('Use 2 ovos e aveia.',excluded),true);
+  assert.equal(violatesIngredients('Uma vitamina de banana e aveia sem ovo.',excluded),false);
 });
 run('controles de voz e catálogo presentes na interface',()=>{
   const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
