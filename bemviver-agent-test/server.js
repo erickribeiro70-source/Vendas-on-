@@ -186,9 +186,38 @@ async function geminiAnswer(message, history) {
   } catch (err) {console.warn('Gemini fallback:',err.name||'error');return null;}
   finally {clearTimeout(timer);}
 }
+// Consulta somente o indicador público da API oficial. Nunca acessa tickets,
+// pagamentos, dados dos compradores ou credenciais do Mercado Pago.
+const OFFICIAL_SALES_HEALTH='https://bemviver-ia-api.onrender.com/health';
+async function officialCheckoutStatus(fetcher=fetch) {
+  try {
+    const response=await fetcher(OFFICIAL_SALES_HEALTH,{
+      method:'GET',headers:{'Accept':'application/json'},
+      signal:AbortSignal.timeout(8000)
+    });
+    if(!response.ok)return null;
+    const data=await response.json();
+    if(data?.running!==true||typeof data.checkoutEnabled!=='boolean')return null;
+    return data.checkoutEnabled===true&&data.pdfLoaded===true;
+  } catch {return null;}
+}
+function commercialStatusReply(status) {
+  const prefix='O Guia BemViver IA tem 30 receitas caseiras em PDF e custa R$ 14,90, em pagamento único. ';
+  const state=status===true
+    ? 'A API oficial informa que o checkout está habilitado. A compra depende da disponibilidade no site oficial.'
+    : status===false
+      ? 'A API oficial informa que o checkout está indisponível neste momento.'
+      : 'Não consegui confirmar agora a disponibilidade do checkout. Consulte a página oficial.';
+  return prefix+state+' Consulte '+SITE+'/comprar.html. Este chat não cobra, não cria pedidos e não confirma pagamentos.';
+}
 async function answer(message, history) {
   const guarded=localAnswer(message,history);
-  if (['agenda','suporte','comercial','seguranca'].includes(guarded.intent))
+  if(guarded.intent==='comercial'){
+    const enabled=await officialCheckoutStatus();
+    return {...guarded,reply:commercialStatusReply(enabled),mode:'regras',
+      salesStatus:enabled===true?'habilitado':enabled===false?'indisponivel':'nao_confirmado'};
+  }
+  if (['agenda','suporte','seguranca'].includes(guarded.intent))
     return {...guarded,mode:'regras'};
   const ai=await geminiAnswer(message,history);
   if(ai && !violatesIngredients(ai,ingredientPreferences(message).excluded)) return {reply:ai,intent:guarded.intent,mode:'ia',handoff:false};
@@ -276,4 +305,4 @@ if(require.main===module) {
   http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent)send(res,500,{error:'Não foi possível responder agora.'});})})
     .listen(PORT,'0.0.0.0',()=>{console.info('BemViver IA AGENT TEST on port '+PORT);logGeminiConnectivity();});
 }
-module.exports={RECIPES,norm,ingredientPreferences,firstMatchedRecipe,violatesIngredients,lastRecipe,supportCase,localAnswer,sanitizeHistory,answer,handler};
+module.exports={RECIPES,norm,ingredientPreferences,firstMatchedRecipe,violatesIngredients,lastRecipe,supportCase,localAnswer,sanitizeHistory,officialCheckoutStatus,commercialStatusReply,answer,handler};
