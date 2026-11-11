@@ -131,5 +131,5 @@ async function integration(){
     assert.equal(res.status,400);console.log('PASS mensagens acima do limite são rejeitadas');
   } finally {await new Promise(resolve=>server.close(resolve));}
 }
-integration().then(()=>console.log('22 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
+integration().then(()=>console.log('23 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
 
