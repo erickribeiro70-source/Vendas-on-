@@ -6,7 +6,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const {RECIPES,firstMatchedRecipe,ingredientPreferences,violatesIngredients,localAnswer,sanitizeHistory,handler} = require('./server');
+const {RECIPES,firstMatchedRecipe,ingredientPreferences,violatesIngredients,localAnswer,sanitizeHistory,officialCheckoutStatus,commercialStatusReply,handler} = require('./server');
 const run = (name,fn)=>{fn();console.log('PASS',name);};
 run('catálogo tem seis receitas reais',()=>{
   assert.equal(RECIPES.length,6);
@@ -140,6 +140,31 @@ run('botão de e-mail não envia dados e só aparece no encaminhamento',()=>{
   assert.doesNotMatch(html,/data-question="Quero falar com atendente humano"/);
 });
 
+run('comercial informa preço e não autoriza cobrança no chat',()=>{
+  const r=commercialStatusReply(true);
+  assert.match(r,/R\\$ 14,90/);
+  assert.match(r,/checkout está habilitado/);
+  assert.match(r,/não cria pedidos/);
+});
+run('cliente usa somente link oficial de compra sem enviar dados financeiros',()=>{
+  const client=fs.readFileSync(path.join(__dirname,'client.js'),'utf8');
+  assert.match(client,/bemviver-ia\\.onrender\\.com\\/comprar\\.html/);
+  assert.match(client,/if\\(result\\.intent==='comercial'\\)addCheckoutAction/);
+  assert.doesNotMatch(client,/api\\/checkout/);
+});
+async function checkoutStatusTests(){
+  const enabled=await officialCheckoutStatus(async()=>({ok:true,json:async()=>({running:true,checkoutEnabled:true,pdfLoaded:true})}));
+  assert.equal(enabled,true);
+  console.log('PASS disponibilidade oficial habilitada com PDF carregado');
+  const disabled=await officialCheckoutStatus(async()=>({ok:true,json:async()=>({running:true,checkoutEnabled:false,pdfLoaded:true})}));
+  const noPdf=await officialCheckoutStatus(async()=>({ok:true,json:async()=>({running:true,checkoutEnabled:true,pdfLoaded:false})}));
+  assert.equal(disabled,false);assert.equal(noPdf,false);
+  console.log('PASS bloqueio quando checkout desativado ou PDF ausente');
+  const unavailable=await officialCheckoutStatus(async()=>{throw new Error('connection lost');});
+  assert.equal(unavailable,null);
+  assert.match(commercialStatusReply(null),/Não consegui confirmar/);
+  console.log('PASS falha de rede não inventa disponibilidade comercial');
+}
 async function integration(){
   const server=http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent){res.statusCode=500;res.end('erro');}});});
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
@@ -167,5 +192,5 @@ async function integration(){
     assert.equal(res.status,400);console.log('PASS mensagens acima do limite são rejeitadas');
   } finally {await new Promise(resolve=>server.close(resolve));}
 }
-integration().then(()=>console.log('28 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
+checkoutStatusTests().then(integration).then(()=>console.log('33 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
 
