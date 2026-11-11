@@ -97,6 +97,21 @@ function lastRecipe(history) {
   }
   return null;
 }
+
+function supportCase(message) {
+  const t=norm(message);
+  const warning='Não envie CPF, senhas, dados de cartão ou comprovantes neste chat de testes.';
+  if (/\b(reembolso|estorno|devolver dinheiro|cancelamento|cancelar compra|quero cancelar)\b/.test(t))
+    return {topic:'reembolso',subject:'BemViver IA - solicitação de reembolso',reply:'Para solicitar a análise de um reembolso, entre em contato com nosso suporte humano. Este chat não cancela pedidos, não faz estornos e não consulta o Mercado Pago. '+warning};
+  if (/\b(nao recebi|nao chegou|liberar|libera|baixar|download|acesso|link de acesso|abrir o pdf|pdf nao|receber o pdf)\b/.test(t))
+    return {topic:'acesso',subject:'BemViver IA - acesso ao guia PDF',reply:'Se você comprou o guia e ainda não conseguiu acessar o PDF, nosso suporte humano pode orientar a verificação. Aqui não consultamos pedidos nem liberamos arquivos; o acesso depende da confirmação no sistema oficial. '+warning};
+  if (/\b(paguei|pagamento|pix|cartao|comprovante|pedido|cobranca|cobrado|aprovado|recusado)\b/.test(t))
+    return {topic:'pagamento',subject:'BemViver IA - dúvida sobre pagamento',reply:'Para verificar uma cobrança, um Pix ou o status de um pedido, fale com o suporte humano. Este ambiente não confirma pagamentos e não acessa os registros do Mercado Pago. '+warning};
+  if (/\b(atendente|humano|falar com alguem|falar com uma pessoa|suporte humano|reclamacao)\b/.test(t))
+    return {topic:'atendimento',subject:'BemViver IA - atendimento humano',reply:'Você pode conversar com nosso suporte por e-mail. Este protótipo não envia mensagens automaticamente nem abre solicitações no sistema oficial. '+warning};
+  return null;
+}
+
 function localAnswer(message, history=[]) {
   const t=norm(message), remembered=lastRecipe(history);
   const preferences=ingredientPreferences(message);
@@ -107,8 +122,10 @@ function localAnswer(message, history=[]) {
   // Ações externas desligadas por design nesta versão.
   if (/\b(agenda|agendar|marcar consulta|consulta|horario disponivel|remarcar|reservar)\b/.test(t))
     return {reply:'Ainda não oferecemos consultas ou serviços com horários para reservar. Quando o BemViver IA tiver um evento ou atendimento agendável, mostraremos a agenda real e confirmaremos somente os horários disponíveis.', intent:'agenda',handoff:false};
-  if (/\b(paguei|pagamento|pix|cartao|comprovante|pedido|download|receber o pdf|liberar guia|reembolso|cancelamento)\b/.test(t)) {
-    return {reply:'Posso orientar sobre o guia, mas esta demonstração não consulta pagamentos nem libera arquivos. Se você já comprou ou precisa de reembolso, escreva para '+SUPPORT+'. Não envie senhas, dados de cartão ou CPF aqui. O acesso ao PDF depende da confirmação do Mercado Pago no sistema oficial.', intent:'suporte',handoff:true};
+  const support=supportCase(message);
+  if (support) {
+    return {reply:support.reply+' Contato: '+SUPPORT+'.',intent:'suporte',handoff:true,
+      supportTopic:support.topic,support:{email:SUPPORT,subject:support.subject}};
   }
   if (/\b(preco|valor|custa|comprar|compra|guia|ebook|e-book|livro|assina|assinatura|promocao)\b/.test(t)) {
     return {reply:'O Guia BemViver IA reúne 30 receitas caseiras em PDF e tem preço anunciado de R$ 14,90, pagamento único. A disponibilidade da compra é informada somente na página oficial: '+SITE+'/comprar.html. Este chat de testes não cobra nem cria pedidos. Quer conhecer uma receita gratuita antes?',intent:'comercial',handoff:false};
@@ -259,4 +276,4 @@ if(require.main===module) {
   http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent)send(res,500,{error:'Não foi possível responder agora.'});})})
     .listen(PORT,'0.0.0.0',()=>{console.info('BemViver IA AGENT TEST on port '+PORT);logGeminiConnectivity();});
 }
-module.exports={RECIPES,norm,ingredientPreferences,firstMatchedRecipe,violatesIngredients,lastRecipe,localAnswer,sanitizeHistory,answer,handler};
+module.exports={RECIPES,norm,ingredientPreferences,firstMatchedRecipe,violatesIngredients,lastRecipe,supportCase,localAnswer,sanitizeHistory,answer,handler};
