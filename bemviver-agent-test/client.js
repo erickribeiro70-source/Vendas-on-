@@ -7,10 +7,36 @@ const status=document.getElementById('status');
 const history=[];
 let busy=false;
 const introduction='Olá! 🌿 Sou o assistente BemViver IA, em fase de testes. Que tal me contar quais ingredientes você tem na cozinha? Também posso explicar como funciona nosso guia de receitas.';
+function addSafeFormatting(target, source) {
+  // Only support bold markers and bullet prefixes. Never interpret arbitrary HTML.
+  // All generated text is inserted through text nodes, not innerHTML.
+  const lines=String(source).split(/\r?\n/);
+  lines.forEach((rawLine, lineIndex)=>{
+    if(lineIndex)target.appendChild(document.createTextNode('\n'));
+    let line=rawLine;
+    const bullet=/^\s*(?:\*|-|•)\s+(?=\S)/.exec(line);
+    if(bullet){
+      target.appendChild(document.createTextNode('• '));
+      line=line.slice(bullet[0].length);
+    }
+    const bold=/\*\*([^*\n]{1,120})\*\*/g;
+    let cursor=0, match;
+    while((match=bold.exec(line))!==null){
+      target.appendChild(document.createTextNode(line.slice(cursor,match.index)));
+      const strong=document.createElement('strong');
+      strong.textContent=match[1];
+      target.appendChild(strong);
+      cursor=match.index+match[0].length;
+    }
+    target.appendChild(document.createTextNode(line.slice(cursor)));
+  });
+}
 function addBubble(text,who) {
   const row=document.createElement('div');row.className='bubble-row '+(who==='user'?'user-row':'assistant-row');
   const bubble=document.createElement('div');bubble.className='bubble '+(who==='user'?'user-msg':'assist-msg');
-  bubble.textContent=text;row.appendChild(bubble);messages.appendChild(row);messages.scrollTop=messages.scrollHeight;
+  if(who==='assistant')addSafeFormatting(bubble,text);
+  else bubble.textContent=text;
+  row.appendChild(bubble);messages.appendChild(row);messages.scrollTop=messages.scrollHeight;
 }
 async function ask(message) {
   if(busy||!message.trim())return;
@@ -58,7 +84,8 @@ function stopSpeaking(){
 function speakReply(reply){
   if(!voiceEnabled || !speechSupported)return;
   stopSpeaking();
-  const utterance=new SpeechSynthesisUtterance(String(reply).slice(0,1400));
+  const spokenText=String(reply).replace(/\*\*([^*]+)\*\*/g,'$1').replace(/^\s*[*-]\s+/gm,'').trim();
+  const utterance=new SpeechSynthesisUtterance(spokenText.slice(0,1400));
   utterance.lang='pt-BR';
   utterance.rate=1.02;
   utterance.pitch=1.0;
