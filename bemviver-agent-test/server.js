@@ -65,14 +65,27 @@ function firstMatchedRecipe(text) {
   return null;
 }
 function violatesIngredients(answer, excluded) {
-  const normalized=norm(answer);
+  // Reject actual use of an excluded ingredient; do not reject sentences
+  // saying it was omitted, such as "como você não tem ovo" or "sem ovo".
+  let remaining=norm(answer);
   for(const name of excluded) {
-    const cleaned=normalized
-      .replace(new RegExp('\\bsem\\s+(?:usar\\s+|adicionar\\s+)?'+name+'s?\\b','g'),'')
-      .replace(new RegExp('\\bnao\\s+(?:leva|use|usar|precisa\\s+de|utilize|coloque)\\s+'+name+'s?\\b','g'),'')
-      .replace(new RegExp('\\blivre\\s+de\\s+'+name+'s?\\b','g'),'');
-    if(INGREDIENT_WORDS[name].test(cleaned))return true;
-    if(RECIPES.some(r=>r.items.includes(name)&&cleaned.includes(norm(r.nome))))return true;
+    // Do not suggest a catalog recipe that still uses the ingredient,
+    // even when the reply implies the recipe could be changed.
+    if(RECIPES.some(r=>r.items.includes(name)&&remaining.includes(norm(r.nome))))return true;
+    const word=INGREDIENT_WORDS[name];
+    if(!word)continue;
+    const pattern=word.source.slice(2,-2);
+    const omitted=new RegExp(
+      '\\b(?:' +
+        'sem(?:\\s+(?:usar|colocar|adicionar|incluir|utilizar))?' +
+        '|nao\\s+(?:tenho|temos|tem|tenha|use|usar|utilize|utilizar|adicione|adicionar|inclui|inclua|leva|contem|precisa\\s+de|precisamos\\s+de)' +
+        '|evite|evitar|dispensa|dispensar' +
+      ')\\s+(?:(?:de|do|da|o|a|um|uma)\\s+)?' +
+      pattern, 'g'
+    );
+    remaining=remaining.replace(omitted,' ');
+    // An additional mention, e.g. "adicione 2 ovos", is still unsafe.
+    if(word.test(remaining))return true;
   }
   return false;
 }
@@ -129,7 +142,7 @@ async function geminiAnswer(message, history) {
     'Você é a atendente virtual do BemViver IA em AMBIENTE DE TESTES, falando português brasileiro cordial e natural.',
     'Ajude somente com receitas culinárias gerais e dúvidas sobre o Guia BemViver IA.',
     'Use apenas dados confirmados: guia PDF de 30 receitas, R$ 14,90 pagamento único; compra só na página oficial '+SITE+'/comprar.html quando disponível.',
-    'Receitas verificadas no catálogo: '+RECIPES.map(x=>x.nome+'; ingredientes: '+x.ingredientes+'; preparo: '+x.passos).join(' | '),
+    'Receitas verificadas e COMPATÍVEIS com as restrições desta mensagem: '+RECIPES.filter(x=>!x.items.some(item=>ingredientPreferences(message).excluded.has(item))).map(x=>x.nome+'; ingredientes: '+x.ingredientes+'; preparo: '+x.passos).join(' | '),
     'Nunca afirme que pagamentos foram aprovados, que produtos foram entregues ou que existe agendamento; este chat não tem essas integrações.',
     'Nunca solicite senhas, CPF, dados bancários, cartões ou informações médicas. Não ofereça diagnóstico ou tratamento.',
     'Para suporte humano, reembolso ou problema com compra encaminhe para '+SUPPORT+'.',
@@ -137,6 +150,7 @@ async function geminiAnswer(message, history) {
     'Se a pergunta for fora do escopo, diga que é um assistente de receitas e atendimento comercial.',
     'Responda com clareza em até 130 palavras; prefira uma pergunta por vez.',
     'Nunca assuma que um ingrediente negado está disponível. Se o cliente disser não tenho ovo ou sem ovo, NÃO sugira receitas que utilizem ovo.',
+    'Não mencione receitas excluídas, nem mesmo para descartá-las. Escolha somente opções do catálogo compatíveis com o pedido.',
     'Restrições expressas nesta mensagem: '+([...ingredientPreferences(message).excluded].join(', ')||'nenhuma')+'. Respeite-as estritamente.'
   ].join('\n');
   const controller=new AbortController();
