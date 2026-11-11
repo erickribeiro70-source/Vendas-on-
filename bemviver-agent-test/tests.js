@@ -104,6 +104,42 @@ run('formatação de texto da IA exibe negrito e marcadores sem executar HTML',(
   assert.equal(nodes.filter(node=>node.tagName==='strong').length,2);
   assert.ok(nodes.every(node=>!node.tagName||node.tagName==='strong'));
 });
+
+run('reembolso é encaminhado sem estorno automático',()=>{
+  const r=localAnswer('Quero solicitar um reembolso do guia');
+  assert.equal(r.intent,'suporte');
+  assert.equal(r.handoff,true);
+  assert.equal(r.supportTopic,'reembolso');
+  assert.match(r.reply,/não faz estornos/);
+  assert.equal(r.support.email,'contato.bemviveria@gmail.com');
+});
+run('guia não recebido possui categoria própria e não libera PDF',()=>{
+  const r=localAnswer('Já paguei e não recebi o PDF');
+  assert.equal(r.intent,'suporte');
+  assert.equal(r.supportTopic,'acesso');
+  assert.match(r.reply,/não libera arquivos/);
+});
+run('cliente pode pedir atendimento humano diretamente',()=>{
+  const r=localAnswer('Quero falar com atendente humano');
+  assert.equal(r.intent,'suporte');
+  assert.equal(r.supportTopic,'atendimento');
+  assert.equal(r.handoff,true);
+});
+run('dúvida de cobrança não confirma pagamento',()=>{
+  const r=localAnswer('Meu Pix foi aprovado?');
+  assert.equal(r.intent,'suporte');
+  assert.equal(r.supportTopic,'pagamento');
+  assert.match(r.reply,/não confirma pagamentos/);
+});
+run('botão de e-mail não envia dados e só aparece no encaminhamento',()=>{
+  const js=fs.readFileSync(path.join(__dirname,'client.js'),'utf8');
+  const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
+  assert.match(js,/if\(result\.handoff===true\)addSupportAction\(result\.support\)/);
+  assert.match(js,/mailto:contato\.bemviveria@gmail\.com\?subject=/);
+  assert.doesNotMatch(js,/fetch\(['"]\/api\/send-email/);
+  assert.match(html,/Atendimento humano/);
+});
+
 async function integration(){
   const server=http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent){res.statusCode=500;res.end('erro');}});});
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
@@ -131,5 +167,5 @@ async function integration(){
     assert.equal(res.status,400);console.log('PASS mensagens acima do limite são rejeitadas');
   } finally {await new Promise(resolve=>server.close(resolve));}
 }
-integration().then(()=>console.log('23 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
+integration().then(()=>console.log('28 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
 
