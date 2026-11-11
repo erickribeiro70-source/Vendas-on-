@@ -104,7 +104,7 @@ function supportCase(message) {
   if (/\b(reembolso|estorno|devolver dinheiro|cancelamento|cancelar compra|quero cancelar)\b/.test(t))
     return {topic:'reembolso',subject:'BemViver IA - solicitação de reembolso',reply:'Para solicitar a análise de um reembolso, entre em contato com nosso suporte humano. Este chat não cancela pedidos, não faz estornos e não consulta o Mercado Pago. '+warning};
   if (/\b(nao recebi|nao chegou|liberar|libera|baixar|download|acesso|link de acesso|abrir o pdf|pdf nao|receber o pdf)\b/.test(t))
-    return {topic:'acesso',subject:'BemViver IA - acesso ao guia PDF',reply:'Se você comprou o guia e ainda não conseguiu acessar o PDF, nosso suporte humano pode orientar a verificação. Aqui não consultamos pedidos nem liberamos arquivos; o acesso depende da confirmação no sistema oficial. '+warning};
+    return {topic:'acesso',subject:'BemViver IA - acesso ao guia PDF',reply:'Se você comprou o guia e ainda não conseguiu acessar o PDF, nosso suporte humano pode orientar a verificação. Este chat não consulta pagamentos, não consulta pedidos nem libera arquivos; o acesso depende da confirmação no sistema oficial. '+warning};
   if (/\b(paguei|pagamento|pix|cartao|comprovante|pedido|cobranca|cobrado|aprovado|recusado)\b/.test(t))
     return {topic:'pagamento',subject:'BemViver IA - dúvida sobre pagamento',reply:'Para verificar uma cobrança, um Pix ou o status de um pedido, fale com o suporte humano. Este ambiente não confirma pagamentos e não acessa os registros do Mercado Pago. '+warning};
   if (/\b(atendente|humano|falar com alguem|falar com uma pessoa|suporte humano|reclamacao)\b/.test(t))
