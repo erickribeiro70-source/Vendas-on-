@@ -137,7 +137,7 @@ run('botão de e-mail não envia dados e só aparece no encaminhamento',()=>{
   assert.match(js,/if\(result\.handoff===true\)addSupportAction\(result\.support\)/);
   assert.match(js,/mailto:contato\.bemviveria@gmail\.com\?subject=/);
   assert.doesNotMatch(js,/fetch\(['"]\/api\/send-email/);
-  assert.match(html,/Atendimento humano/);
+  assert.doesNotMatch(html,/data-question="Quero falar com atendente humano"/);
 });
 
 async function integration(){
