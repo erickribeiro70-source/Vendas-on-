@@ -142,15 +142,15 @@ run('botão de e-mail não envia dados e só aparece no encaminhamento',()=>{
 
 run('comercial informa preço e não autoriza cobrança no chat',()=>{
   const r=commercialStatusReply(true);
-  assert.match(r,/R\\$ 14,90/);
+  assert.match(r,/R\$ 14,90/);
   assert.match(r,/checkout está habilitado/);
   assert.match(r,/não cria pedidos/);
 });
 run('cliente usa somente link oficial de compra sem enviar dados financeiros',()=>{
   const client=fs.readFileSync(path.join(__dirname,'client.js'),'utf8');
-  assert.match(client,/bemviver-ia\\.onrender\\.com\\/comprar\\.html/);
-  assert.match(client,/if\\(result\\.intent==='comercial'\\)addCheckoutAction/);
-  assert.doesNotMatch(client,/api\\/checkout/);
+  assert.match(client,/bemviver-ia\.onrender\.com\/comprar\.html/);
+  assert.match(client,/if\(result\.intent==='comercial'\)addCheckoutAction/);
+  assert.doesNotMatch(client,/api\/checkout/);
 });
 async function checkoutStatusTests(){
   const enabled=await officialCheckoutStatus(async()=>({ok:true,json:async()=>({running:true,checkoutEnabled:true,pdfLoaded:true})}));
