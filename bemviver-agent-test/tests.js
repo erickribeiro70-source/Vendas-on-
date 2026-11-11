@@ -5,6 +5,7 @@ delete process.env.GEMINI_API_KEY;
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const {RECIPES,firstMatchedRecipe,ingredientPreferences,violatesIngredients,localAnswer,sanitizeHistory,handler} = require('./server');
 const run = (name,fn)=>{fn();console.log('PASS',name);};
 run('catálogo tem seis receitas reais',()=>{
@@ -82,6 +83,26 @@ run('controles de voz e catálogo presentes na interface',()=>{
   assert.match(html,/id="mic"/);assert.match(html,/id="voice-toggle"/);
   assert.match(html,/id="recipes-panel"/);assert.match(js,/recognition\.lang='pt-BR'/);
   assert.match(js,/SpeechSynthesisUtterance/);assert.match(js,/fetch\('\/api\/recipes'/);
+});
+run('formatação de texto da IA exibe negrito e marcadores sem executar HTML',()=>{
+  const client=fs.readFileSync(path.join(__dirname,'client.js'),'utf8');
+  const start=client.indexOf('function addSafeFormatting(');
+  const end=client.indexOf('\nfunction addBubble(',start);
+  assert.ok(start>=0&&end>start);
+  const context={
+    document:{
+      createTextNode:(text)=>({textContent:text,nodeType:3}),
+      createElement:(tagName)=>({tagName,textContent:'',nodeType:1})
+    }
+  };
+  vm.runInNewContext(client.slice(start,end)+'\nthis.safeFormat=addSafeFormatting;',context);
+  const nodes=[];
+  context.safeFormat({appendChild:node=>nodes.push(node)},
+    '**Ingredientes:**\n* 1 banana\n**Preparo:** Bata tudo.\n<script>alert(1)</script>');
+  assert.equal(nodes.map(node=>node.textContent).join(''),
+    'Ingredientes:\n• 1 banana\nPreparo: Bata tudo.\n<script>alert(1)</script>');
+  assert.equal(nodes.filter(node=>node.tagName==='strong').length,2);
+  assert.ok(nodes.every(node=>!node.tagName||node.tagName==='strong'));
 });
 async function integration(){
   const server=http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent){res.statusCode=500;res.end('erro');}});});
