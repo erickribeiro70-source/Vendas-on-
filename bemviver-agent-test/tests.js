@@ -93,6 +93,10 @@ async function integration(){
     res=await fetch(root+'/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:'Quero o passo a passo da panqueca'})});
     body=await res.json();assert.equal(res.status,200);assert.match(body.reply,/banana/);
     console.log('PASS endpoint de conversa responde sem credencial externa');
+    res=await fetch(root+'/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:'Quero um lanche mas não tenho ovo'})});
+    body=await res.json();assert.equal(res.status,200);
+    assert.equal(body.intent,'receita');assert.ok(!body.recipe.items.includes('ovo'));
+    console.log('PASS API real respeita ingrediente indisponível');
     res=await fetch(root+'/api/checkout',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
     assert.equal(res.status,404);console.log('PASS checkout não existe neste servidor');
     res=await fetch(root+'/api/chat',{method:'POST',headers:{'content-type':'application/json',origin:'https://outro.exemplo'},body:'{}'});
@@ -101,5 +105,5 @@ async function integration(){
     assert.equal(res.status,400);console.log('PASS mensagens acima do limite são rejeitadas');
   } finally {await new Promise(resolve=>server.close(resolve));}
 }
-integration().then(()=>console.log('16 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
+integration().then(()=>console.log('22 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
 
