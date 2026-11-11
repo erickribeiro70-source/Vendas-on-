@@ -225,7 +225,18 @@ async function answer(message, history) {
   return {...guarded,mode:'demonstracao'};
 }
 function send(res,status,body,contentType='application/json; charset=utf-8') {
-  res.writeHead(status,{'Content-Type':contentType,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer','Content-Security-Policy':contentType.startsWith('text/html')?"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'":"default-src 'none'"});
+  const html=contentType.startsWith('text/html');
+  const headers={
+    'Content-Type':contentType,'Cache-Control':'no-store',
+    'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
+    // A página da IA pode ser exibida somente dentro do site oficial.
+    // APIs e outros recursos continuam proibidos em frames.
+    'Content-Security-Policy':html
+      ?"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors https://bemviver-ia.onrender.com"
+      :"default-src 'none'; frame-ancestors 'none'"
+  };
+  if(!html) headers['X-Frame-Options']='DENY';
+  res.writeHead(status,headers);
   res.end(typeof body==='string'?body:JSON.stringify(body));
 }
 const hits=new Map();
