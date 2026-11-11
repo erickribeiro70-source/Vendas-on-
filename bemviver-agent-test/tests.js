@@ -1,6 +1,9 @@
 'use strict';
 const assert = require('node:assert/strict');
-const {RECIPES,firstMatchedRecipe,localAnswer,sanitizeHistory} = require('./server');
+const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
+const {RECIPES,firstMatchedRecipe,localAnswer,sanitizeHistory,handler} = require('./server');
 const run = (name,fn)=>{fn();console.log('PASS',name);};
 run('catálogo tem seis receitas reais',()=>{
   assert.equal(RECIPES.length,6);
@@ -39,4 +42,35 @@ run('higieniza histórico sem objetos inválidos',()=>{
 run('reconhece nomes com acento',()=>{
   assert.equal(firstMatchedRecipe('Quero o Omelete de tomate e ervas').id,'omelete');
 });
-console.log('9 testes concluídos.');
+run('controles de voz e catálogo presentes na interface',()=>{
+  const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
+  const js=fs.readFileSync(path.join(__dirname,'client.js'),'utf8');
+  assert.match(html,/id="mic"/);assert.match(html,/id="voice-toggle"/);
+  assert.match(html,/id="recipes-panel"/);assert.match(js,/recognition\.lang='pt-BR'/);
+  assert.match(js,/SpeechSynthesisUtterance/);assert.match(js,/fetch\('\/api\/recipes'/);
+});
+async function integration(){
+  const server=http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent){res.statusCode=500;res.end('erro');}});});
+  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+  try{
+    const root='http://127.0.0.1:'+server.address().port;
+    let res=await fetch(root+'/health');let body=await res.json();
+    assert.equal(res.status,200);assert.equal(body.environment,'test');
+    assert.equal(body.checkoutEnabled,false);assert.equal(body.chargesEnabled,false);assert.equal(body.bookingEnabled,false);
+    console.log('PASS health garante ambiente isolado e pagamentos desativados');
+    res=await fetch(root+'/api/recipes');body=await res.json();
+    assert.equal(res.status,200);assert.equal(body.recipes.length,6);
+    console.log('PASS endpoint real de catálogo responde com seis receitas');
+    res=await fetch(root+'/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:'Quero o passo a passo da panqueca'})});
+    body=await res.json();assert.equal(res.status,200);assert.match(body.reply,/banana/);
+    console.log('PASS endpoint de conversa responde sem credencial externa');
+    res=await fetch(root+'/api/checkout',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+    assert.equal(res.status,404);console.log('PASS checkout não existe neste servidor');
+    res=await fetch(root+'/api/chat',{method:'POST',headers:{'content-type':'application/json',origin:'https://outro.exemplo'},body:'{}'});
+    assert.equal(res.status,403);console.log('PASS requisições de origens diferentes são rejeitadas');
+    res=await fetch(root+'/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({message:'x'.repeat(1201)})});
+    assert.equal(res.status,400);console.log('PASS mensagens acima do limite são rejeitadas');
+  } finally {await new Promise(resolve=>server.close(resolve));}
+}
+integration().then(()=>console.log('16 testes concluídos.')).catch(err=>{console.error(err);process.exitCode=1;});
+
