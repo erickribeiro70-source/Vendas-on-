@@ -174,6 +174,11 @@ async function integration(){
     assert.equal(res.status,200);assert.equal(body.environment,'test');
     assert.equal(body.checkoutEnabled,false);assert.equal(body.chargesEnabled,false);assert.equal(body.bookingEnabled,false);
     console.log('PASS health garante ambiente isolado e pagamentos desativados');
+    res=await fetch(root+'/');
+    assert.equal(res.status,200);
+    assert.equal(res.headers.get('x-frame-options'),null);
+    assert.match(res.headers.get('content-security-policy'),/frame-ancestors https:\/\/bemviver-ia\.onrender\.com/);
+    console.log('PASS site oficial pode incorporar chat com frame-ancestors restrito');
     res=await fetch(root+'/api/recipes');body=await res.json();
     assert.equal(res.status,200);assert.equal(body.recipes.length,6);
     console.log('PASS endpoint real de catálogo responde com seis receitas');
