@@ -70,6 +70,11 @@ run('resposta do Gemini com ingrediente proibido é descartada',()=>{
   const excluded=new Set(['ovo']);
   assert.equal(violatesIngredients('Use 2 ovos e aveia.',excluded),true);
   assert.equal(violatesIngredients('Uma vitamina de banana e aveia sem ovo.',excluded),false);
+  assert.equal(violatesIngredients('Como você não tem ovo, sugiro uma vitamina de banana.',excluded),false);
+  assert.equal(violatesIngredients('Não use ovo; bata banana, aveia e leite.',excluded),false);
+  assert.equal(violatesIngredients('A receita não leva ovo. Bata banana e aveia.',excluded),false);
+  assert.equal(violatesIngredients('Sem ovo, adicione 2 ovos à mistura.',excluded),true);
+  assert.equal(violatesIngredients('Sugiro panqueca de banana com aveia sem ovo.',excluded),true);
 });
 run('controles de voz e catálogo presentes na interface',()=>{
   const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
