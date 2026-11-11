@@ -65,3 +65,15 @@ O backend já está preparado para usar Gemini quando `GEMINI_API_KEY` for defin
 - O botão **Escrever para o suporte humano** usa um link `mailto:` e **exige ação manual do cliente**. Não gera chamados, não guarda conversas e não envia e-mail.
 - O chat não coleta CPF, senhas, dados bancários ou comprovantes; mensagens não devem conter dados pessoais.
 - Antes da produção, revisar disponibilidade real da equipe de suporte, política de reembolso, privacidade e eventual integração de uma caixa de entrada.
+
+
+## Ligação comercial segura com o pagamento oficial
+
+O atendimento em testes consulta **somente** o indicador público `GET https://bemviver-ia-api.onrender.com/health` em perguntas sobre preço ou compra, para diferenciar checkout habilitado, indisponível e estado desconhecido. A consulta não envia dados do usuário e não usa credenciais.
+
+- Quando a API oficial informa `checkoutEnabled:true` e `pdfLoaded:true`, o chat informa a disponibilidade técnica e oferece um link para `https://bemviver-ia.onrender.com/comprar.html`.
+- Com `checkoutEnabled:false`, o chat indica indisponibilidade. Em falha de rede, **não** afirma que há vendas ativas.
+- O link abre a página comercial existente. **Nenhum pagamento, preferência ou pedido é criado pelo agente**.
+- O endpoint `/api/checkout`, a confirmação de pagamento e a entrega do PDF permanecem exclusivamente na API oficial, sujeitos às regras do Mercado Pago.
+- A confirmação de pagamento ou o acesso ao PDF requer um vínculo autenticado com o pedido; não aceite e-mail, IDs de pagamento ou declarações em linguagem natural como prova de pagamento.
+- O agente não altera `ENABLE_CHECKOUT`, não lê `MP_ACCESS_TOKEN` e não utiliza `/api/status` nem `/api/download`.
