@@ -38,6 +38,26 @@ function addBubble(text,who) {
   else bubble.textContent=text;
   row.appendChild(bubble);messages.appendChild(row);messages.scrollTop=messages.scrollHeight;
 }
+function addSupportAction(support) {
+  // Link local, iniciado pelo cliente: nenhuma mensagem é enviada automaticamente.
+  const allowedSubjects=new Set([
+    'BemViver IA - solicitação de reembolso',
+    'BemViver IA - acesso ao guia PDF',
+    'BemViver IA - dúvida sobre pagamento',
+    'BemViver IA - atendimento humano'
+  ]);
+  const subject=allowedSubjects.has(support?.subject)?support.subject:'BemViver IA - atendimento humano';
+  const row=document.createElement('div');
+  row.className='support-action';
+  const a=document.createElement('a');
+  a.href='mailto:contato.bemviveria@gmail.com?subject='+encodeURIComponent(subject);
+  a.textContent='✉️ Escrever para o suporte humano';
+  a.setAttribute('aria-label','Abrir aplicativo de e-mail para contatar o suporte');
+  row.appendChild(a);
+  messages.appendChild(row);
+  messages.scrollTop=messages.scrollHeight;
+}
+
 async function ask(message) {
   if(busy||!message.trim())return;
   busy=true;send.disabled=true;input.disabled=true;
@@ -51,6 +71,7 @@ async function ask(message) {
     if(!response.ok)throw new Error(result.error||'Falha no atendimento.');
     const reply=String(result.reply||'Não consegui responder agora.');
     addBubble(reply,'assistant');
+    if(result.handoff===true)addSupportAction(result.support);
     history.push({role:'model',content:reply});
     if (voiceEnabled) speakReply(reply);
     status.textContent=result.mode==='ia'?'IA generativa conectada • testes':result.mode==='regras'?'Resposta verificada • testes':'Atendimento guiado • testes';
