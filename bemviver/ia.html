@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Converse com o assistente virtual do BemViver IA, descubra receitas e conheça o guia digital de 30 receitas.">
+<title>Conversar com IA | BemViver IA</title>
+<style>
+:root{color-scheme:light;--verde:#245e4d;--borda:#d9e8dc;--tinta:#17342c}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--tinta);background:#f5f9f4}
+nav{padding:12px clamp(15px,3vw,36px);background:#fff;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-weight:900;font-size:20px;text-decoration:none;color:var(--verde)}
+.links{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.links a{font-weight:750;color:var(--verde);text-decoration:none;border:1px solid var(--borda);background:white;padding:9px 12px;border-radius:10px}
+.links .buy{background:var(--verde);color:#fff}
+main{max-width:1100px;margin:auto;padding:16px clamp(10px,2vw,22px) 24px}
+h1{font-size:clamp(22px,3vw,32px);line-height:1.15;margin:4px 0 8px}
+p{margin:0 0 12px;color:#456456}
+.chat{overflow:hidden;border:1px solid var(--borda);border-radius:17px;box-shadow:0 10px 35px #14372717;background:#fff}
+iframe{display:block;border:0;width:100%;height:min(780px,calc(100dvh - 186px));min-height:490px}
+.notice{font-size:13px;margin:12px 3px 0;color:#567064}
+.notice a{color:var(--verde);font-weight:700}
+@media(max-width:620px){nav{align-items:flex-start}main{padding:12px 8px 18px}iframe{height:calc(100dvh - 185px);min-height:460px}.chat{border-radius:10px}}
+</style>
+</head>
+<body>
+<nav aria-label="Navegação BemViver IA">
+ <a class="brand" href="/">🌿 BemViver IA</a>
+ <div class="links">
+  <a href="/">Receitas grátis</a>
+  <a class="buy" href="/comprar.html">Guia R$ 14,90</a>
+ </div>
+</nav>
+<main>
+<h1>Converse com a inteligência artificial</h1>
+<p>Peça ideias de receitas ou informações sobre o Guia BemViver IA.</p>
+<div class="chat">
+ <iframe title="Atendimento com inteligência artificial BemViver IA (beta)" src="https://bemviver-ia-agente-teste.onrender.com/" allow="microphone" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+</div>
+<p class="notice">Chat em versão beta, hospedado em um serviço separado. Ele não realiza cobranças, não verifica pedidos e não libera o PDF. Para comprar, use somente a <a href="/comprar.html">página oficial</a>, quando as vendas estiverem habilitadas. Se a conversa não abrir aqui, <a href="https://bemviver-ia-agente-teste.onrender.com/" target="_blank" rel="noopener noreferrer">abra o chat diretamente</a>. Não compartilhe dados de cartão, CPF ou senhas.</p>
+</main>
+</body>
+</html>
