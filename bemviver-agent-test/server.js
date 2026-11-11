@@ -169,8 +169,30 @@ async function handler(req,res) {
   }
   return send(res,404,{error:'Página não encontrada'});
 }
+
+async function logGeminiConnectivity() {
+  const key=String(process.env.GEMINI_API_KEY||'').trim();
+  const model=String(process.env.GEMINI_MODEL||'gemini-2.5-flash').trim();
+  console.info('Gemini diagnostic: configured='+Boolean(key)+' model='+model);
+  if(!key) return;
+  if(!/^[a-zA-Z0-9._-]+$/.test(model)){
+    console.warn('Gemini diagnostic: invalid model identifier');return;
+  }
+  try {
+    // Read-only model metadata check, without prompts, user data or billable generation.
+    const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model,{
+      method:'GET',headers:{'x-goog-api-key':key},
+      signal:AbortSignal.timeout(8000)
+    });
+    console.info('Gemini diagnostic: metadata HTTP '+response.status);
+    if(!response.ok) console.warn('Gemini diagnostic: check Google AI Studio project/key/model; no key or response body logged');
+  } catch(error){
+    console.warn('Gemini diagnostic: metadata request unavailable ('+String(error.name||'network error')+')');
+  }
+}
+
 if(require.main===module) {
   http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent)send(res,500,{error:'Não foi possível responder agora.'});})})
-    .listen(PORT,'0.0.0.0',()=>console.info('BemViver IA AGENT TEST on port '+PORT));
+    .listen(PORT,'0.0.0.0',()=>{console.info('BemViver IA AGENT TEST on port '+PORT);logGeminiConnectivity();});
 }
 module.exports={RECIPES,norm,firstMatchedRecipe,lastRecipe,localAnswer,sanitizeHistory,answer,handler};
