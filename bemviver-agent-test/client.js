@@ -58,6 +58,18 @@ function addSupportAction(support) {
   messages.scrollTop=messages.scrollHeight;
 }
 
+function addCheckoutAction(salesStatus) {
+  // Apenas abre a página comercial oficial. Sem chamadas de cobrança neste chat.
+  const row=document.createElement('div');row.className='support-action';
+  const link=document.createElement('a');
+  link.href='https://bemviver-ia.onrender.com/comprar.html';
+  link.target='_blank';link.rel='noopener noreferrer';
+  link.textContent=salesStatus==='habilitado'
+    ?'📘 Conferir compra no site oficial'
+    :'📗 Ver disponibilidade do guia no site oficial';
+  row.appendChild(link);messages.appendChild(row);
+  messages.scrollTop=messages.scrollHeight;
+}
 async function ask(message) {
   if(busy||!message.trim())return;
   busy=true;send.disabled=true;input.disabled=true;
@@ -72,6 +84,7 @@ async function ask(message) {
     const reply=String(result.reply||'Não consegui responder agora.');
     addBubble(reply,'assistant');
     if(result.handoff===true)addSupportAction(result.support);
+    if(result.intent==='comercial')addCheckoutAction(result.salesStatus);
     history.push({role:'model',content:reply});
     if (voiceEnabled) speakReply(reply);
     status.textContent=result.mode==='ia'?'IA generativa conectada • testes':result.mode==='regras'?'Resposta verificada • testes':'Atendimento guiado • testes';
