@@ -11,14 +11,15 @@ Diretório: `bemviver-agent-test/`. Branch: `teste/agente-bemviver-v1`.
 - API `POST /api/chat` com continuidade por histórico da sessão.
 - Catálogo real de seis receitas do site oficial.
 - Guia: PDF com 30 receitas por R$ 14,90, preço único.
-- Encaminhamento de dúvidas de pagamentos ou reembolsos por e-mail.
+- Triagem separada de reembolso, PDF não recebido, dúvidas de pagamento e solicitação de atendimento humano.
+- Botão de e-mail para suporte que abre o aplicativo do visitante com assunto pré-definido, sem envio automático de mensagens.
 - Limitação de taxa, validação das mensagens, nenhuma persistência de conversa.
 - Modo demonstração sem credencial e modo opcional de IA generativa via Gemini.
 
 ## O que não faz
 
 - Cobrar, criar pedidos, acessar Mercado Pago ou liberar o PDF.
-- Enviar mensagens via WhatsApp/Gmail.
+- Enviar mensagens via WhatsApp/Gmail ou abrir chamados persistentes de forma automática.
 - Marcar consultas, criar agenda ou inventar horários.
 - Diagnosticar doenças ou pedir dados pessoais sensíveis.
 - Alterar os serviços existentes de produção.
@@ -56,3 +57,11 @@ Em Node >=20: `cd bemviver-agent-test && node tests.js && node server.js`. Abra 
 
 ## Situação da IA generativa
 O backend já está preparado para usar Gemini quando `GEMINI_API_KEY` for definida exclusivamente no serviço de testes. Essa variável **não** foi configurada nesta implantação. Não copiar chaves de outros projetos nem inserir credenciais em arquivos públicos. Sem ela, as respostas continuam guiadas pelo catálogo e pelas regras.
+
+## Atendimento comercial — fase de testes
+
+- O cliente pode usar os atalhos **Ajuda com pedido**, **Reembolso** e **Atendimento humano**.
+- O backend classifica os casos e informa o limite das ações: não consulta o Mercado Pago, não promete reembolso nem libera o PDF.
+- O botão **Escrever para o suporte humano** usa um link `mailto:` e **exige ação manual do cliente**. Não gera chamados, não guarda conversas e não envia e-mail.
+- O chat não coleta CPF, senhas, dados bancários ou comprovantes; mensagens não devem conter dados pessoais.
+- Antes da produção, revisar disponibilidade real da equipe de suporte, política de reembolso, privacidade e eventual integração de uma caixa de entrada.
