@@ -42,9 +42,28 @@ label.check input{width:20px;height:20px;flex:0 0 auto;margin-top:2px}
 footer{font-size:13px;color:var(--mute);margin-top:22px}
 footer a{color:var(--green)}
 @media(max-width:720px){main{padding:22px 13px 50px}.hero{grid-template-columns:1fr}.box,.offer{padding:20px}.price{font-size:46px}.actions .btn{width:100%}}
+
+body{background:#fffcf4;color:#153d28}
+header{background:linear-gradient(100deg,#02411e,#0e6432);border-bottom:3px solid #e5c871}
+header .brand,header nav a{color:white!important}
+.hero h1{color:#053c1e;font-weight:950;letter-spacing:-.04em}
+.feature li{background:#eff6e9;border-radius:20px;padding:8px 10px;color:#18512d;font-weight:750}
+.offer{background:linear-gradient(145deg,#dff0d2,#fff4d2);box-shadow:0 18px 35px #123b171a}
+.bv-cover{padding:12px;border:7px solid #1b2821;border-radius:18px;background:linear-gradient(#fffef1,#cbe3b9);text-align:center;box-shadow:6px 7px #16441f29}
+.bv-cover span{font-size:20px;font-weight:950;color:#074325}
+.bv-cover strong{display:block;background:#06562b;color:white;padding:10px;border-radius:12px;font-size:24px;margin:9px 0}
+.bv-cover em{font-style:normal;font-size:1.7em;color:#ffe629}
+.bv-cover small{display:block;font-weight:850;color:#225d39}
+.bv-cover .bv-food{font-size:35px}
+.offer .price{background:linear-gradient(120deg,#b51b16,#de3023);color:#ffdf20;text-align:center;border-radius:16px;padding:12px}
+.offer .btn,#botao-checkout{background:linear-gradient(#5dbd0b,#096c2c);box-shadow:0 4px 0 #07491d;color:#fff;border-radius:12px}
+.bv-methods{display:flex;flex-wrap:wrap;gap:6px}
+.bv-methods span{background:white;border-radius:8px;padding:5px 9px;color:#145c32;font-weight:850;font-size:13px}
+#compra-automatica{border:2px solid #b4d79f;background:#fbfff6}
+@media(max-width:720px){.hero{grid-template-columns:1fr}.bv-cover{max-width:320px;margin:auto}}
 </style></head>
 <body>
-<header><nav><a class="brand" href="/">🌿 BemViver IA</a><a href="/" style="color:#245e4d;font-size:13px;font-weight:700">Voltar às receitas grátis</a></nav></header>
+<header><nav><a class="brand" href="/">♡🌿 BemViver IA</a><a href="/" style="color:#245e4d;font-size:13px;font-weight:700">Voltar às receitas grátis</a></nav></header>
 <main>
 <section class="hero">
 <div>
@@ -60,11 +79,11 @@ footer a{color:var(--green)}
 <p class="small">Conteúdo culinário educativo. Não inclui consulta profissional, tratamento médico ou promessa de emagrecimento.</p>
 </div>
 <aside class="offer" aria-label="Preço e condições de entrega">
-<span class="kicker">📘 Guia BemViver IA</span><div class="price">R$ 14,90</div>
+<div class="bv-cover" role="img" aria-label="Capa ilustrativa do guia de 30 receitas"><span>♡🌿 BemViver IA</span><small>GUIA DIGITAL</small><strong><em>30</em> Receitas</strong><small>Caseiras e práticas</small><div class="bv-food" aria-hidden="true">🥣🍌🍓</div></div><span class="kicker">📘 Guia BemViver IA</span><div class="price">R$ 14,90</div>
 <strong>Pagamento único, sem assinatura</strong>
 <p>O produto é um PDF. <b>Pagamentos temporariamente pausados:</b> estamos validando a confirmação de pagamento e o download seguro antes da abertura das vendas.</p>
 <a class="btn" href="#como-comprar">Saiba como vai funcionar →</a>
-<p class="small">Nenhum pagamento deve ser realizado nesta fase de testes.</p>
+<p class="small">Nenhum pagamento deve ser realizado nesta fase de testes.</p><div class="bv-methods"><span>Pix</span><span>Cartão</span><span>Boleto</span></div><p class="small">⬇ Download após a confirmação do pagamento</p>
 </aside>
 </section>
 <section class="box" id="compra-automatica" hidden aria-labelledby="titulo-automatico">
