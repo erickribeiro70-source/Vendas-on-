@@ -61,7 +61,7 @@ async function request(method,url,body='',headers={}){
   let status=null;
   let response;
   let resultHeaders={};
-  const req={method,url,headers,socket:{remoteAddress:'127.0.0.1'},
+  const req={method,url,headers:{...(body?{'content-type':'application/json'}:{}),...headers},socket:{remoteAddress:'127.0.0.1'},
     async *[Symbol.asyncIterator](){if(body)yield Buffer.from(JSON.stringify(body))}};
   const res={setHeader(k,v){resultHeaders[k]=v},
     writeHead(n,h={}){status=n;Object.assign(resultHeaders,h)},
@@ -104,6 +104,11 @@ async function request(method,url,body='',headers={}){
   assert.equal(sandbox.__test.ready(),false,'Sem vendedor esperado checkout nao pode habilitar');
   env.BEMVIVER_TEST_SELLER_ID='3805194124';
   assert.equal(sandbox.__test.ready(),true);
+  r=await request('POST','/api/checkout',{email:'teste@example.com'},{origin:'https://other.example'});
+  assert.equal(r.status,403);
+  r=await request('POST','/api/checkout',{email:'teste@example.com'},{'content-type':'text/plain'});
+  assert.equal(r.status,415);
+
   sellerOverride='987654321';
   r=await request('POST','/api/checkout',{email:'teste@example.com'});
   assert.equal(r.status,503,'Token de vendedor divergente deve bloquear checkout do sandbox');
@@ -116,6 +121,10 @@ async function request(method,url,body='',headers={}){
   r=await request('GET','/retorno?ticket='+encodeURIComponent(ticket));
   assert.equal(r.status,200,'Pagina de retorno do checkout valida');
   assert.ok(String(r.body).includes('Consultando seu pagamento'),'Retorno possui acompanhamento do pedido');
+  assert.equal(r.headers['X-Frame-Options'],'DENY');
+  const nonce=String(r.body).match(/<script nonce="([^"]+)">/)?.[1];
+  assert.ok(nonce && r.headers['Content-Security-Policy'].includes("'nonce-"+nonce+"'"));
+
   assert.ok(!sandbox.__test.parseTicket(ticket+'x'),'Ticket adulterado bloqueado');
   paid=false;
   r=await request('GET','/api/status?ticket='+encodeURIComponent(ticket));

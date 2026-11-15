@@ -151,6 +151,12 @@ function verifyWebhook(req,u){
  if(!crypto.timingSafeEqual(Buffer.from(check,'hex'),Buffer.from(signature,'hex')))return reject('invalid-hmac');
  return true;
 }
+function checkoutPage(res, html) {
+ const nonce=crypto.randomBytes(18).toString('base64');
+ const policy="default-src 'none'; script-src 'nonce-"+nonce+"'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
+ res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Content-Security-Policy':policy});
+ return res.end(html.replace('<script>','<script nonce="'+nonce+'">'));
+}
 function page(t){
  const safe=JSON.stringify(t);
  return '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BemViver IA — Entrega</title><style>body{font:17px system-ui;background:#f3f8f3;color:#153f31;max-width:600px;margin:40px auto;padding:20px}main{background:white;padding:24px;border-radius:14px}a{color:#215d4b}#download a{display:inline-block;background:#215d4b;color:white;padding:12px;border-radius:8px}</style><main><h1>BemViver IA</h1><p id="msg">Consultando seu pagamento no Mercado Pago…</p><p id="download"></p><a href="'+SITE+'">Voltar ao site</a></main><script>const t='+safe+';let count=0;async function check(){try{const r=await fetch("/api/status?ticket="+encodeURIComponent(t));const j=await r.json();if(j.paid){document.getElementById("msg").textContent="Pagamento aprovado!";const a=document.createElement("a");a.href="/api/download?ticket="+encodeURIComponent(t);a.textContent="Baixar guia de 30 receitas";document.getElementById("download").replaceChildren(a);return;}document.getElementById("msg").textContent="Pagamento ainda não confirmado. Vamos consultar novamente.";}catch{document.getElementById("msg").textContent="Verificação indisponível. Atualize esta página.";}if(++count<60)setTimeout(check,10000)}check()</script></html>';
@@ -187,13 +193,20 @@ const SANDBOX_CHECKOUT_PAGE="<!doctype html><html lang=\"pt-BR\"><head><meta cha
 
 const rate=new Map();
 http.createServer(async(req,res)=>{
- const u=new URL(req.url,HOST),path=u.pathname;
+ res.setHeader('Strict-Transport-Security','max-age=31536000');
+ res.setHeader('X-Content-Type-Options','nosniff');
+ res.setHeader('X-Frame-Options','DENY');
+ res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
+ res.setHeader('Referrer-Policy','no-referrer');
+ res.setHeader('Vary','Origin');
+ let u;
+ try{u=new URL(req.url,HOST)}catch{return json(res,400,{error:'Endereço inválido'});}
+ const path=u.pathname;
  if(req.headers.origin===SITE){res.setHeader('Access-Control-Allow-Origin',SITE);res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');}
  if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
  if(req.method==='GET'&&path==='/teste-compra'){
   if(process.env.BEMVIVER_SANDBOX_MODE!=='true')return json(res,404,{error:'Não encontrado'});
-  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'self'"});
-  return res.end(SANDBOX_CHECKOUT_PAGE);
+  return checkoutPage(res,SANDBOX_CHECKOUT_PAGE);
  }
  if(req.method==='GET'&&path==='/public/identificacao')return json(res,200,{published:sellerDisclosureReady(),cpf:sellerDisclosureReady()?publicSellerCpf():null});
  if(req.method==='GET'&&path==='/health')return json(res,200,{name:'BemViver IA API',running:true,checkoutEnabled:ready(),pdfLoaded:!!pdf(),webhookConfigured:WEBHOOK_SECRET_VALID,sellerIdentityReady:process.env.BEMVIVER_SANDBOX_MODE==='true'?null:sellerDisclosureReady()});
@@ -205,11 +218,32 @@ http.createServer(async(req,res)=>{
  }
  if(req.method==='POST'&&path==='/api/checkout'){
   if(!ready())return json(res,503,{error:'Checkout ainda não ativado. Nenhuma cobrança foi iniciada.'});
-  const ip=req.socket.remoteAddress||'unknown',now=Date.now(),recent=(rate.get(ip)||[]).filter(t=>now-t<60000);
-  if(recent.length>=8)return json(res,429,{error:'Muitas tentativas'});recent.push(now);rate.set(ip,recent);if(rate.size>2000)rate.clear();
+  const origin=req.headers.origin;
+  if(origin && origin!==SITE && origin!==new URL(HOST).origin)return json(res,403,{error:'Origem não permitida'});
+  const type=req.headers['content-type']?.split(';',1)[0].trim().toLowerCase();
+  if(type!=='application/json')return json(res,415,{error:'Envie os dados em JSON'});
+  if(Number(req.headers['content-length'])>8192)return json(res,413,{error:'Pedido grande demais'});
+  const ip=req.socket.remoteAddress||'unknown',now=Date.now();
+  for(const [key,times] of rate)if(times.at(-1)<=now-60000)rate.delete(key);
+  const recent=(rate.get(ip)||[]).filter(t=>now-t<60000);
+  if(recent.length>=8 || (!rate.has(ip) && rate.size>=2000)){
+   res.setHeader('Retry-After','60');
+   return json(res,429,{error:'Muitas tentativas'});
+  }
+  recent.push(now);rate.set(ip,recent);
+  let data;
   try{
-   let data='';for await(const b of req){data+=b;if(data.length>8192)return json(res,413,{error:'Pedido grande demais'});}
-   const email=String(JSON.parse(data).email||'').trim().toLowerCase();
+   const chunks=[];let size=0;
+   const stream=req.iterator?.({destroyOnReturn:false})||req;
+   for await(const chunk of stream){
+    size+=chunk.length;
+    if(size>8192){req.resume?.();return json(res,413,{error:'Pedido grande demais'});}
+    chunks.push(chunk);
+   }
+   data=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  }catch{return json(res,400,{error:'Pedido inválido'});}
+  const email=typeof data?.email==='string'?data.email.trim().toLowerCase():'';
+  try{
    if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json(res,400,{error:'Informe e-mail válido'});
    const ref='BV_'+crypto.randomBytes(16).toString('hex'),ticket=makeTicket(ref,Date.now()),ret=HOST+'/retorno?ticket='+encodeURIComponent(ticket);
    const preference=await mp('/checkout/preferences','POST',{
@@ -231,13 +265,13 @@ http.createServer(async(req,res)=>{
    }
    const checkoutDestination=new URL(preference.init_point);
    const hostname=checkoutDestination.hostname;
-   if(checkoutDestination.protocol!=='https:'||!(hostname==='mercadopago.com'||hostname.endsWith('.mercadopago.com')||hostname==='mercadopago.com.br'||hostname.endsWith('.mercadopago.com.br')))throw Error('Unsafe init_point');
+   if(checkoutDestination.protocol!=='https:'||checkoutDestination.port||checkoutDestination.username||checkoutDestination.password||!(hostname==='mercadopago.com'||hostname.endsWith('.mercadopago.com')||hostname==='mercadopago.com.br'||hostname.endsWith('.mercadopago.com.br')))throw Error('Unsafe init_point');
    return json(res,200,{checkoutUrl:preference.init_point,ticket});
   }catch(e){console.error('Checkout error',e.message);return json(res,502,{error:'Não foi possível iniciar o checkout'});}
  }
  if(req.method==='GET'&&path==='/retorno'){
   const p=parseTicket(u.searchParams.get('ticket'));if(!p)return json(res,403,{error:'Link inválido'});
-  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'"});return res.end(page(u.searchParams.get('ticket')));
+  return checkoutPage(res,page(u.searchParams.get('ticket')));
  }
  if(req.method==='GET'&&(path==='/api/status'||path==='/api/download')){
   const p=parseTicket(u.searchParams.get('ticket'));if(!p)return json(res,403,{error:'Link inválido ou expirado'});
