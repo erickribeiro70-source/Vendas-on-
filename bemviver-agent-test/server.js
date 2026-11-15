@@ -228,7 +228,7 @@ function send(res,status,body,contentType='application/json; charset=utf-8') {
   const html=contentType.startsWith('text/html');
   const headers={
     'Content-Type':contentType,'Cache-Control':'no-store',
-    'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
+    'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Strict-Transport-Security':'max-age=31536000','Permissions-Policy':'camera=(), geolocation=()',
     // A página da IA pode ser exibida somente dentro do site oficial.
     // APIs e outros recursos continuam proibidos em frames.
     'Content-Security-Policy':html
@@ -242,19 +242,24 @@ function send(res,status,body,contentType='application/json; charset=utf-8') {
 const hits=new Map();
 function limited(ip) {
   const now=Date.now(), key=String(ip||'anon').slice(0,80);
+  for(const [id,state] of hits)if(now-state.at>=60000)hits.delete(id);
   const old=hits.get(key);
-  if(!old||now-old.at>60000) {hits.set(key,{at:now,count:1});return false;}
+  if(!old){
+    if(hits.size>=2000)return true;
+    hits.set(key,{at:now,count:1});return false;
+  }
   old.count++;
-  if(hits.size>2000) for(const [k,v] of hits) if(now-v.at>60000) hits.delete(k);
   return old.count>24;
 }
-function readBody(req) {
-  return new Promise((resolve,reject)=>{
-    let data='',size=0;
-    req.on('data',chunk=>{size+=chunk.length;if(size>16000){reject(new Error('too_large'));req.destroy();return;}data+=chunk;});
-    req.on('end',()=>resolve(data));
-    req.on('error',reject);
-  });
+async function readBody(req,max=16000) {
+  if(Number(req.headers['content-length'])>max)return null;
+  const parts=[];let bytes=0;
+  for await(const chunk of req.iterator({destroyOnReturn:false})){
+    bytes+=chunk.length;
+    if(bytes>max){req.resume();return null;}
+    parts.push(chunk);
+  }
+  return Buffer.concat(parts).toString('utf8');
 }
 async function handler(req,res) {
   const url=new URL(req.url,'http://localhost');
@@ -277,10 +282,14 @@ async function handler(req,res) {
       catch{return send(res,403,{error:'Origem inválida'});}
     }
     if(limited(req.socket.remoteAddress))return send(res,429,{error:'Muitas mensagens em pouco tempo. Tente novamente em instantes.'});
-    if(!(req.headers['content-type']||'').includes('application/json'))
+    if(req.headers['content-type']?.split(';',1)[0].trim().toLowerCase()!=='application/json')
       return send(res,415,{error:'Envie JSON'});
     let body;
-    try {body=JSON.parse(await readBody(req));}
+    try {
+      const raw=await readBody(req);
+      if(raw===null)return send(res,413,{error:'Mensagem muito longa'});
+      body=JSON.parse(raw);
+    }
     catch{return send(res,400,{error:'Mensagem inválida'});}
     if(!body||typeof body.message!=='string'||!body.message.trim()||body.message.length>1200)
       return send(res,400,{error:'Escreva uma mensagem de até 1.200 caracteres.'});
@@ -313,7 +322,7 @@ async function logGeminiConnectivity() {
 }
 
 if(require.main===module) {
-  http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent)send(res,500,{error:'Não foi possível responder agora.'});})})
+  http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error('Falha no atendimento:',e.name);if(!res.headersSent)send(res,500,{error:'Não foi possível responder agora.'});})})
     .listen(PORT,'0.0.0.0',()=>{console.info('BemViver IA AGENT TEST on port '+PORT);logGeminiConnectivity();});
 }
 module.exports={RECIPES,norm,ingredientPreferences,firstMatchedRecipe,violatesIngredients,lastRecipe,supportCase,localAnswer,sanitizeHistory,officialCheckoutStatus,commercialStatusReply,answer,handler};
