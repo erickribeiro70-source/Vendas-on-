@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Wm8fZKq/aVqjuVhy1XMLYexPhsyWtolMCJ/1DNy7n9c='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://bemviver-ia-api.onrender.com; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://bemviver-ia-api.onrender.com; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#245e4d">
 <meta name="description" content="Conheça o guia BemViver IA com 30 receitas caseiras por R$ 14,90. Pagamento único pelo Mercado Pago com download após aprovação, quando o checkout estiver disponível.">
 <title>Guia de 30 receitas por R$ 14,90 | BemViver IA</title>
@@ -85,9 +85,9 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#f8f7f1;color:#17382a
 <aside class="offer" aria-label="Preço e condições de entrega">
 <div class="bv-cover" role="img" aria-label="Capa ilustrativa do guia de 30 receitas"><span>♡🌿 BemViver IA</span><small>GUIA DIGITAL</small><strong><em>30</em> Receitas</strong><small>Caseiras e práticas</small><div class="bv-food" aria-hidden="true">🥣🍌🍓</div></div><span class="kicker">📘 Guia BemViver IA</span><div class="price">R$ 14,90</div>
 <strong>Pagamento único, sem assinatura</strong>
-<p>O produto é um PDF. <b>Pagamentos temporariamente pausados:</b> estamos validando a confirmação de pagamento e o download seguro antes da abertura das vendas.</p>
-<a class="btn" href="#como-comprar">Saiba como vai funcionar →</a>
-<p class="small">Nenhum pagamento deve ser realizado nesta fase de testes.</p><div class="bv-methods"><span>Pix</span><span>Cartão</span><span>Boleto</span></div><p class="small">⬇ Download após a confirmação do pagamento</p>
+<p id="estado-checkout" role="status" aria-live="polite">Conferindo a disponibilidade do pagamento seguro…</p>
+<a class="btn" href="#estado-checkout" aria-disabled="true">Verificando pagamento…</a><button class="btn secondary" id="retry-checkout" type="button" hidden>Verificar novamente</button>
+<p class="small">Pagamento único. O guia é liberado após a confirmação do Mercado Pago.</p><div class="bv-methods"><span>Pix</span><span>Cartão</span><span>Boleto</span></div><p class="small">⬇ Download após a confirmação do pagamento</p>
 </aside>
 </section>
 <section class="box" id="compra-automatica" hidden aria-labelledby="titulo-automatico">
@@ -103,79 +103,25 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#f8f7f1;color:#17382a
 <p id="mensagem-checkout" class="result" role="status" aria-live="polite"></p>
 </form>
 </section>
-<section class="box" id="como-comprar">
-<span class="kicker">Atendimento e lançamento</span><h2>Guia digital em preparação</h2>
-<p class="warn"><strong>Vendas pausadas:</strong> não realize pagamentos enquanto a integração é testada. O atendimento pode esclarecer dúvidas sobre o conteúdo do guia.</p>
-<p>O guia contém 30 receitas caseiras e será oferecido por R$ 14,90 quando concluirmos os testes da entrega digital. Por enquanto, você pode tirar dúvidas pelo e-mail <a href="mailto:contato.bemviveria@gmail.com">contato.bemviveria@gmail.com</a>.</p>
+<section class="box" id="como-comprar" hidden>
+<span class="kicker">Atendimento</span><h2>Precisa de ajuda para comprar?</h2>
+<p class="warn">Não foi possível disponibilizar o pagamento agora. Tente verificar novamente ou consulte o atendimento.</p>
+<p>O guia contém 30 receitas caseiras e custa R$ 14,90 em pagamento único. Você pode tirar dúvidas pelo e-mail <a href="mailto:contato.bemviveria@gmail.com">contato.bemviveria@gmail.com</a>.</p>
 <div class="actions">
 <a class="btn" href="mailto:contato.bemviveria@gmail.com?subject=Atendimento%20BemViver%20IA">Enviar e-mail ao BemViver IA</a>
-<button class="btn secondary" type="button" id="copy">Copiar pergunta sobre o lançamento</button>
+<button class="btn secondary" type="button" id="copy">Copiar pergunta sobre a compra</button>
 </div>
 <p class="result" id="copy-status" role="status" aria-live="polite"></p>
-<h2 style="margin-top:23px">Pagamento em preparação</h2>
-<p class="warn" role="status"><strong>Checkout indisponível nesta fase.</strong> O botão de pagamento só será publicado após os testes e a autorização de ativação.</p>
+<h2 style="margin-top:23px">Pagamento seguro</h2>
+<p class="warn" role="status">O formulário só é liberado quando o servidor confirma que o pagamento e a entrega estão disponíveis.</p>
 </section>
 <section class="box" aria-label="Identificação do fornecedor e atendimento"><h2>Quem vende e como obter suporte</h2><p>Responsável: <strong>Erick Ribeiro</strong>, vendedor pessoa física. Atendimento: <a href="mailto:contato.bemviveria@gmail.com">contato.bemviveria@gmail.com</a>.</p><p><a href="/termos.html">Confira o endereço, identificação fiscal quando disponibilizada, condições de entrega e informações sobre reembolso</a> antes da compra.</p><p>O direito de arrependimento em compras online é de 7 dias, conforme a legislação aplicável. Para solicitar cancelamento ou reembolso, utilize o e-mail de atendimento.</p></section>
 <section class="box faq" aria-label="Perguntas frequentes"><h2>Dúvidas frequentes</h2>
-<details><summary>Como receberei o guia?</summary><p>Quando as vendas forem ativadas, o guia será disponibilizado por download após a confirmação segura do pagamento. O envio automático por e-mail ainda não está disponível.</p></details>
-<details><summary>O guia terá pagamento único?</summary><p>Sim. Quando as vendas forem liberadas, o preço previsto é R$ 14,90 por compra, sem assinatura recorrente. Os pagamentos estão pausados no momento.</p></details>
-<details><summary>Como posso tirar dúvidas sobre o lançamento e meus direitos?</summary><p>Entre em contato por e-mail: contato.bemviveria@gmail.com e consulte as <a href="/termos.html">informações do produto e direitos do consumidor</a>. Nenhum pagamento deve ser realizado durante os testes.</p></details>
+<details><summary>Como receberei o guia?</summary><p>O guia é disponibilizado por download na página de retorno após a confirmação segura do pagamento. O envio automático por e-mail ainda não está disponível.</p></details>
+<details><summary>O guia terá pagamento único?</summary><p>Sim. O guia custa R$ 14,90 por compra, sem assinatura recorrente. A disponibilidade do pagamento é conferida nesta página.</p></details>
+<details><summary>Como posso tirar dúvidas sobre o lançamento e meus direitos?</summary><p>Entre em contato por e-mail: contato.bemviveria@gmail.com e consulte as <a href="/termos.html">informações do produto e direitos do consumidor</a>.</p></details>
 </section>
 <footer>© 2026 BemViver IA. Não envie senhas, dados de cartão, CPF ou informações de saúde por mensagens. <a href="/termos.html">Informações do produto</a> · <a href="/privacidade.html">Privacidade</a>.</footer>
-</main>
-<script>
-// O checkout integrado só aparece após resposta positiva do servidor; a API
-// também bloqueia qualquer criação de pedido enquanto ENABLE_CHECKOUT=false.
-const apiBemViver='https://bemviver-ia-api.onrender.com';
-const caixaAutomatica=document.getElementById('compra-automatica');
-const formCheckout=document.getElementById('form-checkout');
-const botaoCheckout=document.getElementById('botao-checkout');
-const mensagemCheckout=document.getElementById('mensagem-checkout');
-fetch(apiBemViver+'/health',{cache:'no-store'})
- .then(async r=>r.ok?await r.json():null)
- .then(status=>{
-  const vendasAtivas=!!(status&&status.checkoutEnabled===true);
-  caixaAutomatica.hidden=!vendasAtivas;
-  if(!vendasAtivas)return;
-  const oferta=document.querySelector('.offer');
-  oferta.querySelector('p').textContent='Pague com segurança pelo Mercado Pago. Depois da confirmação, o download do guia será liberado na página de retorno.';
-  const atalho=oferta.querySelector('a.btn');
-  atalho.href='#compra-automatica';
-  atalho.textContent='Comprar agora — R$ 14,90';
-  oferta.querySelector('.small').textContent='Pagamento único e entrega digital após a aprovação da compra.';
-  document.getElementById('como-comprar').hidden=true;
-  const respostas=document.querySelectorAll('.faq details p');
-  if(respostas.length===3){
-    respostas[0].textContent='Após a confirmação do pagamento pelo Mercado Pago, você poderá baixar o PDF na página de retorno. Guarde essa página para acessar novamente o guia.';
-    respostas[1].textContent='Sim. O guia custa R$ 14,90 em pagamento único, sem assinatura.';
-    respostas[2].textContent='Para suporte sobre o produto ou solicitações de reembolso, entre em contato pelo e-mail contato.bemviveria@gmail.com indicado nos termos de compra e consulte as informações do produto.';
-  }
-})
- .catch(()=>{caixaAutomatica.hidden=true});
-formCheckout.addEventListener('submit',async event=>{
- event.preventDefault();
- if(botaoCheckout.disabled)return;
- const email=document.getElementById('email-checkout').value.trim();
- if(!email||!formCheckout.reportValidity())return;
- botaoCheckout.disabled=true;
- mensagemCheckout.textContent='Preparando seu pedido com segurança…';
- try{
-  const r=await fetch(apiBemViver+'/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
-  const data=await r.json();
-  if(!r.ok||!data.checkoutUrl)throw new Error('indisponivel');
-  const url=new URL(data.checkoutUrl);
-  if(url.protocol!=='https:'||!(url.hostname==='mercadopago.com'||url.hostname.endsWith('.mercadopago.com')||url.hostname==='mercadopago.com.br'||url.hostname.endsWith('.mercadopago.com.br')))throw new Error('destino-invalido');
-  window.location.assign(url.href);
- }catch{
-  mensagemCheckout.textContent='Não foi possível iniciar o checkout. Nenhum pagamento foi feito. Use o atendimento para obter ajuda.';
-  botaoCheckout.disabled=false;
- }
-});
-document.getElementById('copy').addEventListener('click',async()=>{
- const message='Olá! Gostaria de saber quando o Guia BemViver IA de 30 receitas estará disponível, como será feita a entrega do PDF e quais serão as condições da compra. Não quero fazer pagamento durante os testes.';
- const status=document.getElementById('copy-status');
- try{await navigator.clipboard.writeText(message);status.textContent='Mensagem copiada. Cole na conversa do Instagram.'}
- catch{status.textContent='Copie esta mensagem: '+message}
-});
-</script>
+<noscript><p class="warn">Ative o JavaScript do navegador para conferir a disponibilidade e abrir o pagamento seguro.</p></noscript></main>
+<script src="/checkout.js" type="module"></script>
 </body></html>

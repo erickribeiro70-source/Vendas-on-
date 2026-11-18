@@ -1,3 +1,4 @@
+import {track,campaignLink} from './traffic.js';
 import {products} from './catalog.js';
 const main = document.querySelector('main');
 const dialog = document.querySelector('#ai-dialog');
@@ -196,6 +197,8 @@ function sendChat(message){
 }
 function render(){
  const [page,id]=location.hash.slice(1).split('/');
+ const event=page==='produto'?(id==='guia'?'guide_view':'recipe_view'):page==='guia'?'guide_view':['catalogo','experimentar'].includes(page)?'catalog_view':(!page||page==='inicio')?'home_view':null;
+ if(event)void track(event);
  document.querySelectorAll('[data-nav]').forEach(el=>{if(el.dataset.nav===(page||'inicio'))el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});
  if(page==='produto'){const item=products.find(p=>p.id===id);main.innerHTML=item?detail(item):'<div class="empty"><h1>Receita não encontrada</h1><a class="btn primary" href="#catalogo">Voltar ao catálogo</a></div>';}
  else if(page==='guia'){main.innerHTML=detail(products[0]);}
@@ -212,6 +215,8 @@ async function checkSales(){
  const strip=document.querySelector('#checkout-strip');if(strip)strip.textContent=checkoutLabel(availability.checkout);
 }
 document.addEventListener('click',async event=>{
+ const offerLink=event.target.closest('a[href]');
+ if(offerLink&&new URL(offerLink.href).origin===location.origin&&new URL(offerLink.href).pathname==='/comprar.html'){offerLink.href=campaignLink('/comprar.html');void track('offer_click');}
  if(event.target.closest('[data-ai-close]'))dialog.close();
  const link=event.target.closest('[data-share-link]');if(link)showShareLink(link,'Se a rede social não abrir, copie este link e cole na sua publicação.');
  const button=event.target.closest('button');if(!button)return;

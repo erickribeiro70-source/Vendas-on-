@@ -1,28 +1,26 @@
 'use strict';
-// Verificações de build sem rede, sem credenciais e sem iniciar cobranças.
+// Offline checks: validate the actual browser modules and payment safeguards.
 const fs=require('node:fs');
 const path=require('node:path');
+const {execFileSync}=require('node:child_process');
 const vm=require('node:vm');
+const root=path.join(__dirname,'..','bemviver');
 const server=fs.readFileSync(path.join(__dirname,'server.js'),'utf8');
-const checkout=fs.readFileSync(path.join(__dirname,'..','bemviver','comprar.html'),'utf8');
-const home=fs.readFileSync(path.join(__dirname,'..','bemviver','index.html'),'utf8');
-new vm.Script(server,{filename:'bemviver-server/server.js'});
-const start=checkout.lastIndexOf('<script>');
-const end=checkout.lastIndexOf('</script>');
-if(start<0||end<start)throw Error('Script da pagina de compra nao encontrado');
-new vm.Script(checkout.slice(start+8,end),{filename:'bemviver/comprar.html:inline.js'});
-const homeStart=home.lastIndexOf('<script>');
-const homeEnd=home.lastIndexOf('</script>');
-if(homeStart<0||homeEnd<homeStart)throw Error('Script da pagina inicial nao encontrado');
-new vm.Script(home.slice(homeStart+8,homeEnd),{filename:'bemviver/index.html:inline.js'});
-if(!home.includes("id=\"home-sale-status\"")||!home.includes("status.checkoutEnabled!==true"))
-  throw Error('Pagina inicial nao verifica o estado do checkout');
-
-if(!server.includes("ENABLE_CHECKOUT==='true'"))throw Error('Trava de cobranca ausente');
-if(!checkout.includes('id="compra-automatica"')||!checkout.includes('id="form-checkout"'))throw Error('Formulario de checkout em falta');
-if(/mpago\.la|id=["']pagar["']/.test(checkout))throw Error('Link de pagamento manual deve ficar ausente enquanto testes nao forem aprovados');
+const checkout=fs.readFileSync(path.join(root,'comprar.html'),'utf8');
+const home=fs.readFileSync(path.join(root,'index.html'),'utf8');
+new vm.Script(server,{filename:'server.js'});
+new vm.Script(fs.readFileSync(path.join(__dirname,'traffic-events.js'),'utf8'),{filename:'traffic-events.js'});
+for(const name of ['checkout.js','app.js','catalog.js','traffic.js']){
+ const code=fs.readFileSync(path.join(root,name),'utf8');
+ execFileSync(process.execPath,['--input-type=module','--check'],{input:code,stdio:['pipe','inherit','inherit']});
+}
+const checkoutJs=fs.readFileSync(path.join(root,'checkout.js'),'utf8');
+if(!checkout.includes('src="/checkout.js"')||!home.includes('src="/app.js"'))throw Error('Módulo da página ausente');
+if(!checkoutJs.includes("paintSales('loading')")||!checkoutJs.includes("paintSales('error')")||!checkoutJs.includes("s.checkoutEnabled===true&&s.pdfLoaded===true&&s.webhookConfigured===true&&s.sellerIdentityReady===true"))throw Error('Disponibilidade de compra sem verificação completa');
+if(!checkout.includes('id="compra-automatica" hidden')||!checkout.includes('id="form-checkout"'))throw Error('Formulário deve iniciar oculto');
+if(!server.includes("ENABLE_CHECKOUT==='true'")||!server.includes("if(!ready())return json(res,503"))throw Error('Trava de cobrança ausente');
+if(/mpago\.la/.test(checkout))throw Error('Link manual de pagamento não permitido');
 if(!server.includes("mp('/checkout/preferences','POST'")||!server.includes("mp('/v1/payments/search?'")||server.includes("mp('/v1/orders'"))throw Error('API incorreta para Checkout Pro');
-if(!checkout.includes('Checkout indisponível nesta fase.'))throw Error('Aviso de cobranca pausada deve estar visivel');
-if(!server.includes("if(!ready())return json(res,503"))throw Error('Checkout desativado deve retornar 503');
-require('node:child_process').execFileSync(process.execPath,[path.join(__dirname,'offline-sales-test.js')],{stdio:'inherit'});
-console.log('BemViver: sintaxe, bloqueio de checkout e simulacao de vendas aprovados (sem rede e sem pagamentos).');
+execFileSync(process.execPath,[path.join(__dirname,'offline-sales-test.js')],{stdio:'inherit'});
+execFileSync(process.execPath,[path.join(__dirname,'sales-ui-test.js')],{stdio:'inherit'});
+console.log('BemViver: módulos, estado de disponibilidade e proteções de pagamento aprovados.');
